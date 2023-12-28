@@ -1,0 +1,19 @@
+dev:
+  sourceUrl: "mongodb://dev-source-server"
+  sourceDatabase: "devDb"
+  sourceUserNameArn: "arn:aws:secretsmanager:dev:source:username"
+  sourceUserPasswordArn: "arn:aws:secretsmanager:dev:source:password"
+  destinationUrl: "mongodb://dev-destination-server"
+  destinationDatabase: "devDestinationDb"
+  destinationUserNameArn: "arn:aws:secretsmanager:dev:destination:username"
+  destinationUserPasswordArn: "arn:aws:secretsmanager:dev:destination:password"
+
+prod:
+  sourceUrl: "mongodb://prod-source-server"
+  sourceDatabase: "prodDb"
+  sourceUserNameArn: "arn:aws:secretsmanager:prod:source:username"
+  sourceUserPasswordArn: "arn:aws:secretsmanager:prod:source:password"
+  destinationUrl: "mongodb://prod-destination-server"
+  destinationDatabase: "prodDestinationDb"
+  destinationUserNameArn: "arn:aws:secretsmanager:prod:destination:username"
+  destinationUserPasswordArn: "arn:aws:secretsmanager:prod:destination:password"
