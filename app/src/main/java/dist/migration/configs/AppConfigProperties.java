@@ -9,7 +9,6 @@ public class AppConfigProperties {
     private String sourceUserNameArn;
     private String sourceUserPasswordArn;
 
-
     private String destinationUrl;
     private String destinationDatabase;
     private String destinationUserNameArn;

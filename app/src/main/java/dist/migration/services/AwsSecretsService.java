@@ -1,4 +1,4 @@
-package dist.migration.utils;
+package dist.migration.services;
 
 import java.net.URI;
 import org.slf4j.Logger;
@@ -8,9 +8,9 @@ import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest;
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueResponse;
 
-public class SecretsUtil {
+public class AwsSecretsService {
 
-  private static final Logger logger = LoggerFactory.getLogger(SecretsUtil.class);
+  private static final Logger logger = LoggerFactory.getLogger(AwsSecretsService.class);
   private static final String AWS_REGION_US_EAST_1 = "us-east-1";
 
   public static String getSecret(String secretArn) {
@@ -29,7 +29,7 @@ public class SecretsUtil {
           "Successfully retrieved secret ARN: {},{}", secretArn, valueResponse.secretString());
       return valueResponse.secretString();
     } catch (Exception e) {
-      throw new SecretsUtilsException("Failed to retrieve secret from AWS Secrets Manager", e);
+      throw new AwsSecretsServiceException("Failed to retrieve secret from AWS Secrets Manager", e);
     }
   }
 }

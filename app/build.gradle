@@ -25,8 +25,7 @@ dependencies {
     implementation 'software.amazon.awssdk:secretsmanager:2.22.5'
 
     //SnakeYAML for YAML parsing
-    implementation 'org.yaml:snakeyaml:2.2'
-
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.0'
     //MongoDB synchronous driver
     implementation 'org.mongodb:mongodb-driver-sync:4.2.3'
 
@@ -52,7 +51,7 @@ dependencies {
 
 application {
     // Define the main class for the application.
-    mainClass = 'dist.migration.App'
+    mainClass = 'dist.migration.handlers.MongoMigrationHandler'
 }
 
 task buildZip(type: Zip) {
