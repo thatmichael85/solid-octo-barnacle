@@ -25,9 +25,9 @@ dependencies {
     implementation 'software.amazon.awssdk:secretsmanager:2.22.5'
 
     //SnakeYAML for YAML parsing
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.0'
-    //MongoDB synchronous driver
-    implementation 'org.mongodb:mongodb-driver-sync:4.2.3'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.16.1'
+    //MongoDB driver
+    implementation 'org.mongodb:mongodb-driver-reactivestreams:4.11.0'
 
     //Project Reactor
     implementation 'io.projectreactor:reactor-core:3.4.9'
@@ -54,7 +54,7 @@ application {
     mainClass = 'dist.migration.handlers.MongoMigrationHandler'
 }
 
-task buildZip(type: Zip) {
+tasks.register('buildZip', Zip) {
     into('lib') {
         from(jar)
         from(configurations.runtimeClasspath)
