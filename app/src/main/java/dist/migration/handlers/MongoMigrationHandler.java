@@ -21,8 +21,6 @@ import org.slf4j.LoggerFactory;
 public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
   private static final Logger log = LoggerFactory.getLogger(MongoMigrationHandler.class);
   private static final String CONFIG_FILE = "/appconfig.yml";
-  private static String arn =
-      "arn:aws:secretsmanager:us-east-1:000000000000:secret:test-secret-vozPFj";
 
   @Override
   public String handleRequest(InputDto input, Context context) {
@@ -66,12 +64,15 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
     String sourceUri = appConfigProperties.getSourceUrl();
     String sourceDatabase = appConfigProperties.getSourceDatabase();
     String sourceUsername = AwsSecretsService.getSecret(appConfigProperties.getSourceUserNameArn());
-    String sourcePassword = AwsSecretsService.getSecret(appConfigProperties.getSourceUserPasswordArn());
+    String sourcePassword =
+        AwsSecretsService.getSecret(appConfigProperties.getSourceUserPasswordArn());
 
     String destUri = appConfigProperties.getDestinationUrl();
     String destDatabase = appConfigProperties.getDestinationDatabase();
-    String destUsername = AwsSecretsService.getSecret(appConfigProperties.getDestinationUserNameArn());
-    String destPassword = AwsSecretsService.getSecret(appConfigProperties.getDestinationUserPasswordArn());
+    String destUsername =
+        AwsSecretsService.getSecret(appConfigProperties.getDestinationUserNameArn());
+    String destPassword =
+        AwsSecretsService.getSecret(appConfigProperties.getDestinationUserPasswordArn());
 
     // Instantiate MongoMigrationService
     MongoMigrationService migrationService =
