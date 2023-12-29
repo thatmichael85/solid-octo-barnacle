@@ -4,14 +4,13 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicLong;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class MongoMigrationService {
 
@@ -61,24 +60,57 @@ public class MongoMigrationService {
     AtomicLong totalSizeMigrated = new AtomicLong(0);
 
     return Flux.from(sourceCollection.find())
-            .buffer(BATCH_SIZE) // Buffer documents for batch insertion
-            .flatMap(batch -> {
-              long batchTotalSize = batch.stream().mapToLong(doc -> doc.toJson().getBytes(StandardCharsets.UTF_8).length).sum();
+        .buffer(BATCH_SIZE) // Buffer documents for batch insertion
+        .flatMap(
+            batch -> {
+              long batchTotalSize =
+                  batch.stream()
+                      .mapToLong(doc -> doc.toJson().getBytes(StandardCharsets.UTF_8).length)
+                      .sum();
               totalSizeMigrated.addAndGet(batchTotalSize);
               return destCollection.insertMany(batch);
             })
-            .onErrorMap(ex -> new MongoMigrationServiceException("Something went wrong on inserting this batch...",ex))
-            .doOnNext(insertManyResult -> {
-              long count = totalDocumentsMigrated.addAndGet(insertManyResult.getInsertedIds().size());
+        .onErrorMap(
+            ex ->
+                new MongoMigrationServiceException(
+                    "Something went wrong on inserting this batch...", ex))
+        .doOnNext(
+            insertManyResult -> {
+              long count =
+                  totalDocumentsMigrated.addAndGet(insertManyResult.getInsertedIds().size());
               logger.info("Migrated " + count + " documents so far...");
             })
-            .then()
-            .doOnTerminate(() -> {
+        .then(
+            Mono.zip(
+                Mono.from(sourceCollection.countDocuments()),
+                Mono.from(destCollection.countDocuments())))
+        .flatMap(
+            t -> {
+              logger.info(
+                  "Completed migration. Source total Doc count is: {}, Destination total Doc count is: {}",
+                  t.getT1(),
+                  t.getT2());
+              return Mono.empty();
+            })
+        .then()
+        .doOnTerminate(
+            () -> {
               long endTime = System.currentTimeMillis();
               long totalTimeInSeconds = (endTime - startTime) / 1000;
               double totalSizeInGB = totalSizeMigrated.get() / (1024.0 * 1024.0 * 1024.0);
 
-              logger.info("Migration completed: Total Time: " + totalTimeInSeconds + " seconds, Total Documents: " + totalDocumentsMigrated.get() + ", Database: " + destDbName + ", Collection: " + collectionName + ", Total Size: " + totalSizeInGB + " GB");
+              logger.info(
+                  "Migration completed: Total Time: "
+                      + totalTimeInSeconds
+                      + " seconds, Total Documents: "
+                      + totalDocumentsMigrated.get()
+                      + ", Database: "
+                      + destDbName
+                      + ", Collection: "
+                      + collectionName
+                      + ", Total Size: "
+                      + totalSizeInGB
+                      + " GB");
               logger.info("Source URI: " + sourceUri);
               logger.info("Destination URI: " + destUri);
 
@@ -86,7 +118,6 @@ public class MongoMigrationService {
               destClient.close();
             });
   }
-
 
   public Mono<Boolean> testSourceConnectivity() {
     return testConnection(sourceUri, "Source", sourceDbName);
