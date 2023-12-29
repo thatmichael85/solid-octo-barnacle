@@ -9,9 +9,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import dist.migration.configs.AppConfigProperties;
 import dist.migration.configs.Configuration;
 import dist.migration.dtos.InputDto;
-import dist.migration.services.AwsSecretsService;
-import dist.migration.services.MongoMigrationService;
-import dist.migration.services.MongoMigrationServiceException;
+import dist.migration.services.*;
 import dist.migration.validators.InputValidator;
 import java.io.InputStream;
 import java.util.Map;
@@ -30,8 +28,9 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
     Configuration config = loadConfig();
     InputValidator validator = new InputValidator(config);
     validator.validate(input);
+    AwsSecretsServiceImpl awsSecretsService = new AwsSecretsServiceImpl();
     AppConfigProperties appConfig = config.getConfigForEnv(input.getEnv());
-    startMigration(config, appConfig, input.getCollectionName().toString());
+    startMigration(appConfig, input.getCollectionName().toString(), awsSecretsService);
     MDC.clear();
     return context.toString();
   }
@@ -57,38 +56,18 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
     Configuration config = loadConfig();
     AppConfigProperties devConfig = config.getConfigForEnv("dev");
     String collectionName = "yourCollectionName";
-    startMigration(config, devConfig, collectionName);
+    AwsSecretServiceLocal awsSecretServiceLocal = new AwsSecretServiceLocal();
+    startMigration(devConfig, collectionName, awsSecretServiceLocal);
   }
 
   private static void startMigration(
-      Configuration configuration, AppConfigProperties appConfigProperties, String collectionName) {
+      AppConfigProperties appConfigProperties,
+      String collectionName,
+      AwsSecretsService awsSecretsService) {
     log.info("Starting migration...");
     // Extract configuration details for source and destination
-    String sourceUri = appConfigProperties.getSourceUrl();
-    String sourceDatabase = appConfigProperties.getSourceDatabase();
-    String sourceUsername = AwsSecretsService.getSecret(appConfigProperties.getSourceUserNameArn());
-    String sourcePassword =
-        AwsSecretsService.getSecret(appConfigProperties.getSourceUserPasswordArn());
-
-    String destUri = appConfigProperties.getDestinationUrl();
-    String destDatabase = appConfigProperties.getDestinationDatabase();
-    String destUsername =
-        AwsSecretsService.getSecret(appConfigProperties.getDestinationUserNameArn());
-    String destPassword =
-        AwsSecretsService.getSecret(appConfigProperties.getDestinationUserPasswordArn());
-
-    // Instantiate MongoMigrationService
     MongoMigrationService migrationService =
-        new MongoMigrationService(
-            sourceUri,
-            sourceDatabase,
-            sourceUsername,
-            sourcePassword,
-            destUri,
-            destDatabase,
-            destUsername,
-            destPassword,
-            collectionName);
+        createMongoMigrationService(appConfigProperties, collectionName, awsSecretsService);
 
     migrationService.testSourceConnectivity().block();
     migrationService.testDestinationConnectivity().block();
@@ -103,5 +82,35 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
     } catch (Exception e) {
       throw new MongoMigrationServiceException("Migration process was interrupted or failed", e);
     }
+  }
+
+  private static MongoMigrationService createMongoMigrationService(
+      AppConfigProperties appConfigProperties,
+      String collectionName,
+      AwsSecretsService awsSecretsService) {
+    String sourceUri = appConfigProperties.getSourceUrl();
+    String sourceDatabase = appConfigProperties.getSourceDatabase();
+    String sourceUsername = awsSecretsService.getSecret(appConfigProperties.getSourceUserNameArn());
+    String sourcePassword =
+        awsSecretsService.getSecret(appConfigProperties.getSourceUserPasswordArn());
+
+    String destUri = appConfigProperties.getDestinationUrl();
+    String destDatabase = appConfigProperties.getDestinationDatabase();
+    String destUsername =
+        awsSecretsService.getSecret(appConfigProperties.getDestinationUserNameArn());
+    String destPassword =
+        awsSecretsService.getSecret(appConfigProperties.getDestinationUserPasswordArn());
+
+    // Instantiate MongoMigrationService
+    return new MongoMigrationService(
+        sourceUri,
+        sourceDatabase,
+        sourceUsername,
+        sourcePassword,
+        destUri,
+        destDatabase,
+        destUsername,
+        destPassword,
+        collectionName);
   }
 }

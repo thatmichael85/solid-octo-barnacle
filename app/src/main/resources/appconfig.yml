@@ -1,12 +1,12 @@
 dev:
   sourceUrl: "localhost:27017"
   sourceDatabase: "DefaultDatabase"
-  sourceUserNameArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:sourceUsername-fUWLtW"
-  sourceUserPasswordArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:sourcePassword-OKRKUt"
+  sourceUserNameArn: "sourceUsername"
+  sourceUserPasswordArn: "sourcePassword"
   destinationUrl: "localhost:27018"
   destinationDatabase: "DefaultDatabase"
-  destinationUserNameArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:destUsername-xPBfqU"
-  destinationUserPasswordArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:destPassword-trTUWu"
+  destinationUserNameArn: "destUsername"
+  destinationUserPasswordArn: "destPassword"
   validCollections:
     - "COLLECTION_ONE"
     - "COLLECTION_TWO"
