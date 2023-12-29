@@ -1,12 +1,13 @@
 <Configuration>
     <Appenders>
-        <Lambda name="LambdaAppender" format="${env:AWS_LAMBDA_LOG_FORMAT:-TEXT}">            <LambdaTextFormat>
+        <Lambda name="LambdaAppender" format="${env:AWS_LAMBDA_LOG_FORMAT:-TEXT}">
+            <LambdaTextFormat>
                 <PatternLayout>
-                    <pattern>%d{yyyy-MM-dd HH:mm:ss} %X{AWSRequestId} %-5p %c{1} - %m%n </pattern>
+                    <pattern>%d{yyyy-MM-dd HH:mm:ss} %X{AWSRequestId} %-5p %c{1} - %m%n</pattern>
                 </PatternLayout>
             </LambdaTextFormat>
             <LambdaJSONFormat>
-                <JsonTemplateLayout eventTemplateUri="classpath:LambdaLayout.json" />
+                <JsonTemplateLayout eventTemplateUri="classpath:LambdaLayout.json"/>
             </LambdaJSONFormat>
         </Lambda>
         <Async name="AsyncLambdaAppender">
@@ -17,7 +18,7 @@
         <Root level="INFO">
             <AppenderRef ref="AsyncLambdaAppender"/>
         </Root>
-        <Logger name="software.amazon.awssdk" level="WARN" />
-        <Logger name="software.amazon.awssdk.request" level="DEBUG" />
+        <Logger name="software.amazon.awssdk" level="WARN"/>
+        <Logger name="software.amazon.awssdk.request" level="DEBUG"/>
     </Loggers>
 </Configuration>
