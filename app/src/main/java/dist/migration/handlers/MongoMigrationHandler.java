@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
   private static final Logger log = LoggerFactory.getLogger(MongoMigrationHandler.class);
@@ -24,12 +25,14 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
 
   @Override
   public String handleRequest(InputDto input, Context context) {
+    MDC.put("AWSRequestId", context.getAwsRequestId());
     log.info("Received {}", input);
     Configuration config = loadConfig();
     InputValidator validator = new InputValidator(config);
     validator.validate(input);
     AppConfigProperties appConfig = config.getConfigForEnv(input.getEnv());
     startMigration(config, appConfig, input.getCollectionName().toString());
+    MDC.clear();
     return context.toString();
   }
 
