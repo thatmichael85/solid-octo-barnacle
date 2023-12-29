@@ -1,10 +1,10 @@
 dev:
   sourceUrl: "localhost:27017"
-  sourceDatabase: "sourceDefaultDatabase"
+  sourceDatabase: "DefaultDatabase"
   sourceUserNameArn: "sourceUsername"
   sourceUserPasswordArn: "sourcePassword"
   destinationUrl: "localhost:27018"
-  destinationDatabase: "destDefaultDatabase"
+  destinationDatabase: "DefaultDatabase"
   destinationUserNameArn: "destUsername"
   destinationUserPasswordArn: "destPassword"
 
