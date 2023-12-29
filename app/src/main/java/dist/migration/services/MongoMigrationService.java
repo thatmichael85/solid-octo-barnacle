@@ -129,6 +129,26 @@ public class MongoMigrationService {
     destClient.close();
   }
 
+  public Mono<Void> dropDestinationCollection(String collectionName) {
+    MongoClient destClient = MongoClients.create(destUri);
+    MongoDatabase destDb = destClient.getDatabase(destDbName);
+    MongoCollection<Document> destCollection = destDb.getCollection(collectionName);
+
+    return Mono.from(destCollection.drop())
+        .doOnSuccess(
+            aVoid ->
+                logger.info(
+                    "Collection '"
+                        + collectionName
+                        + "' dropped successfully in destination database"))
+        .doOnError(
+            e ->
+                logger.error(
+                    "Error dropping collection '" + collectionName + "' in destination database",
+                    e))
+        .doFinally(signalType -> destClient.close());
+  }
+
   public Mono<Boolean> testSourceConnectivity() {
     return testConnection(sourceUri, "Source", sourceDbName);
   }
