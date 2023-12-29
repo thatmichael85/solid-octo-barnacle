@@ -1,16 +1,10 @@
 package dist.migration.dtos;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public enum CollectionName {
-    COLLECTION_ONE("COLLECTION_ONE"),
-    COLLECTION_TWO("COLLECTION_ONE");
-
-    private final String collectionName;
-
-    CollectionName(String collectionName) {
-        this.collectionName = collectionName;
-    }
-
-    public String getCollectionName() {
-        return collectionName;
-    }
+    yourCollectionName,
+    COLLECTION_ONE,
+    COLLECTION_TWO;
 }

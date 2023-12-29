@@ -9,11 +9,12 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import dist.migration.configs.AppConfigProperties;
 import dist.migration.configs.Configuration;
 import dist.migration.dtos.InputDto;
+import dist.migration.services.AwsSecretsService;
 import dist.migration.services.MongoMigrationService;
+import dist.migration.services.MongoMigrationServiceException;
+import dist.migration.validators.InputValidator;
 import java.io.InputStream;
 import java.util.Map;
-
-import dist.migration.services.MongoMigrationServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,10 +26,13 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
 
   @Override
   public String handleRequest(InputDto input, Context context) {
+    log.info("Received {}", input);
     Configuration config = loadConfig();
+    InputValidator validator = new InputValidator(config);
+    validator.validate(input);
     AppConfigProperties appConfig = config.getConfigForEnv(input.getEnv());
-
-    return appConfig.toString();
+    startMigration(config, appConfig, input.getCollectionName().toString());
+    return context.toString();
   }
 
   private static Configuration loadConfig() {
@@ -52,26 +56,22 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
     Configuration config = loadConfig();
     AppConfigProperties devConfig = config.getConfigForEnv("dev");
     String collectionName = "yourCollectionName";
-
     startMigration(config, devConfig, collectionName);
   }
 
   private static void startMigration(
       Configuration configuration, AppConfigProperties appConfigProperties, String collectionName) {
     log.info("Starting migration...");
-
     // Extract configuration details for source and destination
     String sourceUri = appConfigProperties.getSourceUrl();
     String sourceDatabase = appConfigProperties.getSourceDatabase();
-    String sourceUsername = appConfigProperties.getSourceUserNameArn();
-    String sourcePassword = appConfigProperties.getSourceUserPasswordArn();
+    String sourceUsername = AwsSecretsService.getSecret(appConfigProperties.getSourceUserNameArn());
+    String sourcePassword = AwsSecretsService.getSecret(appConfigProperties.getSourceUserPasswordArn());
 
     String destUri = appConfigProperties.getDestinationUrl();
     String destDatabase = appConfigProperties.getDestinationDatabase();
-    String destUsername = appConfigProperties.getDestinationUserNameArn();
-    String destPassword = appConfigProperties.getDestinationUserPasswordArn();
-
-    // Assuming collectionName is defined somewhere in your configuration or as a constant
+    String destUsername = AwsSecretsService.getSecret(appConfigProperties.getDestinationUserNameArn());
+    String destPassword = AwsSecretsService.getSecret(appConfigProperties.getDestinationUserPasswordArn());
 
     // Instantiate MongoMigrationService
     MongoMigrationService migrationService =
