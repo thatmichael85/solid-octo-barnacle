@@ -95,28 +95,38 @@ public class MongoMigrationService {
         .then()
         .doOnTerminate(
             () -> {
-              long endTime = System.currentTimeMillis();
-              long totalTimeInSeconds = (endTime - startTime) / 1000;
-              double totalSizeInGB = totalSizeMigrated.get() / (1024.0 * 1024.0 * 1024.0);
-
-              logger.info(
-                  "Migration completed: Total Time: "
-                      + totalTimeInSeconds
-                      + " seconds, Total Documents: "
-                      + totalDocumentsMigrated.get()
-                      + ", Database: "
-                      + destDbName
-                      + ", Collection: "
-                      + collectionName
-                      + ", Total Size: "
-                      + totalSizeInGB
-                      + " GB");
-              logger.info("Source URI: " + sourceUri);
-              logger.info("Destination URI: " + destUri);
-
-              sourceClient.close();
-              destClient.close();
+              cleanUp(
+                  startTime, sourceClient, destClient, totalDocumentsMigrated, totalSizeMigrated);
             });
+  }
+
+  private void cleanUp(
+      long startTime,
+      MongoClient sourceClient,
+      MongoClient destClient,
+      AtomicLong totalDocumentsMigrated,
+      AtomicLong totalSizeMigrated) {
+    long endTime = System.currentTimeMillis();
+    long totalTimeInSeconds = (endTime - startTime) / 1000;
+    double totalSizeInGB = totalSizeMigrated.get() / (1024.0 * 1024.0 * 1024.0);
+
+    logger.info(
+        "Migration completed: Total Time: "
+            + totalTimeInSeconds
+            + " seconds, Total Documents: "
+            + totalDocumentsMigrated.get()
+            + ", Database: "
+            + destDbName
+            + ", Collection: "
+            + collectionName
+            + ", Total Size: "
+            + totalSizeInGB
+            + " GB");
+    logger.info("Source URI: " + sourceUri);
+    logger.info("Destination URI: " + destUri);
+
+    sourceClient.close();
+    destClient.close();
   }
 
   public Mono<Boolean> testSourceConnectivity() {

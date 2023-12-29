@@ -49,7 +49,7 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
   }
 
   private static void startMigration() {
-    log.info("Testing...");
+    log.info("Starting migration...");
 
     // Load the configuration
     Configuration config = loadConfig();

@@ -7,7 +7,9 @@ dev:
   destinationDatabase: "DefaultDatabase"
   destinationUserNameArn: "destUsername"
   destinationUserPasswordArn: "destPassword"
-
+  validCollections:
+    - "collectionOne"
+    - "collectionTwo"
 prod:
   sourceUrl: "mongodb://prod-source-server"
   sourceDatabase: "DefaultDatabase"
@@ -17,3 +19,6 @@ prod:
   destinationDatabase: "prodDestinationDb"
   destinationUserNameArn: "arn:aws:secretsmanager:prod:destination:username"
   destinationUserPasswordArn: "arn:aws:secretsmanager:prod:destination:password"
+  validCollections:
+    - "collectionOne"
+    - "collectionTwo"
