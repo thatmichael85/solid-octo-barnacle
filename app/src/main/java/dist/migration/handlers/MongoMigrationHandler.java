@@ -37,8 +37,7 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
 
     try (InputStream inputStream = MongoMigrationHandler.class.getResourceAsStream(CONFIG_FILE)) {
       Map<String, AppConfigProperties> configMap =
-          yamlMapper.readValue(
-              inputStream, new TypeReference<Map<String, AppConfigProperties>>() {});
+          yamlMapper.readValue(inputStream, new TypeReference<>() {});
       Configuration configuration = new Configuration();
       configuration.setEnvironments(configMap);
       return configuration;
