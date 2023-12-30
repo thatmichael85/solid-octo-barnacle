@@ -1,7 +1,6 @@
 package dist.migration.services;
 
 import com.mongodb.reactivestreams.client.MongoClient;
-import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import java.nio.charset.StandardCharsets;
@@ -16,39 +15,28 @@ public class MongoMigrationService {
 
   private static final Logger logger = LoggerFactory.getLogger(MongoMigrationService.class);
   public static final int BATCH_SIZE = 200;
-  private final String sourceUri;
-  private final String destUri;
+
+  private final MongoClient sourceClient;
+  private final MongoClient destClient;
   private final String sourceDbName;
   private final String destDbName;
   private final String collectionName;
 
   public MongoMigrationService(
-      String sourceHost,
+      MongoClient sourceClient,
       String sourceDatabase,
-      String sourceUsername,
-      String sourcePassword,
-      String destHost,
+      MongoClient destClient,
       String destinationDatabase,
-      String destinationUsername,
-      String destinationPassword,
       String collectionName) {
-    this.sourceUri = createMongoUri(sourceHost, sourceUsername, sourcePassword);
-    this.destUri = createMongoUri(destHost, destinationUsername, destinationPassword);
+    this.sourceClient = sourceClient;
+    this.destClient = destClient;
     this.sourceDbName = sourceDatabase;
     this.destDbName = destinationDatabase;
     this.collectionName = collectionName;
   }
 
-  private String createMongoUri(String host, String username, String password) {
-    String credentials = username + ":" + password + "@";
-    return "mongodb://" + credentials + host;
-  }
-
   public Mono<Void> migrate() {
-    long startTime = System.currentTimeMillis(); // Start timing
-
-    MongoClient sourceClient = MongoClients.create(sourceUri);
-    MongoClient destClient = MongoClients.create(destUri);
+    long startTime = System.currentTimeMillis();
 
     MongoDatabase sourceDb = sourceClient.getDatabase(sourceDbName);
     MongoCollection<Document> sourceCollection = sourceDb.getCollection(collectionName);
@@ -60,7 +48,7 @@ public class MongoMigrationService {
     AtomicLong totalSizeMigrated = new AtomicLong(0);
 
     return Flux.from(sourceCollection.find())
-        .buffer(BATCH_SIZE) // Buffer documents for batch insertion
+        .buffer(BATCH_SIZE)
         .flatMap(
             batch -> {
               long batchTotalSize =
@@ -93,19 +81,11 @@ public class MongoMigrationService {
               return Mono.empty();
             })
         .then()
-        .doOnTerminate(
-            () -> {
-              cleanUp(
-                  startTime, sourceClient, destClient, totalDocumentsMigrated, totalSizeMigrated);
-            });
+        .doOnTerminate(() -> cleanUp(startTime, totalDocumentsMigrated, totalSizeMigrated));
   }
 
   private void cleanUp(
-      long startTime,
-      MongoClient sourceClient,
-      MongoClient destClient,
-      AtomicLong totalDocumentsMigrated,
-      AtomicLong totalSizeMigrated) {
+      long startTime, AtomicLong totalDocumentsMigrated, AtomicLong totalSizeMigrated) {
     long endTime = System.currentTimeMillis();
     long totalTimeInSeconds = (endTime - startTime) / 1000;
     double totalSizeInGB = totalSizeMigrated.get() / (1024.0 * 1024.0 * 1024.0);
@@ -122,15 +102,16 @@ public class MongoMigrationService {
             + ", Total Size: "
             + totalSizeInGB
             + " GB");
-    logger.info("Source URI: " + sourceUri);
-    logger.info("Destination URI: " + destUri);
 
-    sourceClient.close();
-    destClient.close();
+    if (sourceClient != null) {
+      sourceClient.close();
+    }
+    if (destClient != null) {
+      destClient.close();
+    }
   }
 
   public Mono<Void> dropDestinationCollection(String collectionName) {
-    MongoClient destClient = MongoClients.create(destUri);
     MongoDatabase destDb = destClient.getDatabase(destDbName);
     MongoCollection<Document> destCollection = destDb.getCollection(collectionName);
 
@@ -146,21 +127,23 @@ public class MongoMigrationService {
                 logger.error(
                     "Error dropping collection '" + collectionName + "' in destination database",
                     e))
-        .doFinally(signalType -> destClient.close());
+        .then()
+        .doFinally(
+            signalType -> {
+              destClient.close();
+            });
   }
 
   public Mono<Boolean> testSourceConnectivity() {
-    return testConnection(sourceUri, "Source", sourceDbName);
+    return testConnection(sourceClient, "Source", sourceDbName);
   }
 
   public Mono<Boolean> testDestinationConnectivity() {
-    return testConnection(destUri, "Destination", destDbName);
+    return testConnection(destClient, "Destination", destDbName);
   }
 
-  private Mono<Boolean> testConnection(String uri, String label, String dbName) {
-    MongoClient client = MongoClients.create(uri);
+  private Mono<Boolean> testConnection(MongoClient client, String label, String dbName) {
     MongoDatabase database = client.getDatabase(dbName);
-
     Document pingCommand = new Document("ping", 1);
     Mono<Document> commandMono = Mono.from(database.runCommand(pingCommand));
 
@@ -169,13 +152,12 @@ public class MongoMigrationService {
             doc -> {
               logger.info(
                   label + " Database connection successful. Ping response: " + doc.toJson());
-              return true; // Return true on success
+              return true;
             })
         .onErrorResume(
             e -> {
               logger.error(label + " Database connection failed", e);
-              return Mono.just(false); // Return false on error
-            })
-        .doFinally(signalType -> client.close());
+              return Mono.just(false);
+            });
   }
 }
