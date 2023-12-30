@@ -9,6 +9,7 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+    id 'jacoco'
 }
 
 repositories {
@@ -56,9 +57,28 @@ application {
     // Define the main class for the application.
     mainClass = 'dist.migration.handlers.MongoMigrationHandler'
 }
+
 test {
     useJUnitPlatform()
+
+    // Configure test reports
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+
+    reports {
+        junitXml.required = true // Enable JUnit XML report generation
+        html.required = true     // Enable HTML report generation (optional)
+    }
 }
+
+jacocoTestReport {
+    reports {
+        xml.required = true  // Enable XML report generation for code coverage
+        html.required = true // Enable HTML report generation for code coverage (optional)
+    }
+}
+
 tasks.register('buildZip', Zip) {
     into('lib') {
         from(jar)
