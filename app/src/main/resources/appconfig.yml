@@ -11,6 +11,8 @@ dev:
     - "COLLECTION_ONE"
     - "COLLECTION_TWO"
     - "yourCollectionName"
+  validDatabases:
+    - DefaultDatabase
 qa:
   sourceUrl: "MongoSource:27017"
   sourceDatabase: "DefaultDatabase"
@@ -24,6 +26,8 @@ qa:
     - "COLLECTION_ONE"
     - "COLLECTION_TWO"
     - "yourCollectionName"
+  validDatabases:
+    - DefaultDatabase
 prod:
   sourceUrl: "mongodb://prod-source-server"
   sourceDatabase: "DefaultDatabase"

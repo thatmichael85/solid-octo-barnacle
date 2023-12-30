@@ -15,4 +15,5 @@ public class AppConfigProperties {
   private String destinationUserNameArn;
   private String destinationUserPasswordArn;
   private Set<String> validCollections;
+  private Set<String> validDatabases;
 }

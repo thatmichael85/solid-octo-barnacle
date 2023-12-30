@@ -165,16 +165,16 @@ public class MongoMigrationService {
     Mono<Document> commandMono = Mono.from(database.runCommand(pingCommand));
 
     return commandMono
-        .doOnSuccess(
-            doc ->
-                logger.info(
-                    label + " Database connection successful. Ping response: " + doc.toJson()))
-        .doOnError(e -> logger.error(label + " Database connection failed", e))
-        .thenReturn(true)
+        .map(
+            doc -> {
+              logger.info(
+                  label + " Database connection successful. Ping response: " + doc.toJson());
+              return true; // Return true on success
+            })
         .onErrorResume(
             e -> {
-              logger.error("Error during ping command: ", e);
-              return Mono.just(false);
+              logger.error(label + " Database connection failed", e);
+              return Mono.just(false); // Return false on error
             })
         .doFinally(signalType -> client.close());
   }

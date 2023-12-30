@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class InputDto {
   private String env;
+  private DataBaseName dataBaseName;
   private CollectionName collectionName;
-  private boolean dropTheCollection;
-  private boolean dryRun;
+  private EventType eventType;
 }
