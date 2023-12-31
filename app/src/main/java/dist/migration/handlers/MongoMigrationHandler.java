@@ -35,15 +35,22 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
     validator.validate(input);
     AwsSecretsServiceImpl awsSecretsService = new AwsSecretsServiceImpl();
     MongoMigrationService migrationService =
-            createMongoMigrationService(config, input, awsSecretsService);
+        createMongoMigrationService(config, input, awsSecretsService);
     MigrationExecutor executor = new MigrationExecutor(migrationService);
+    switch (input.getEventType()) {
+      case DROP_COLLECTION -> executor.dropCollection(input.getCollectionName().toString());
+      case CHECK_CONNECTIVITY -> executor.checkConnectivity();
+      case GET_COLLECTION_SIZE -> executor.getCollectionSize(input.getCollectionName().toString());
+      case EXECUTE_MIGRATION -> executor.run();
+    }
+
     executor.run();
     MDC.clear();
     return context.toString();
   }
 
   private static MongoMigrationService createMongoMigrationService(
-          Configuration config, InputDto input, AwsSecretsService awsSecretsService) {
+      Configuration config, InputDto input, AwsSecretsService awsSecretsService) {
 
     AppConfigProperties appConfigProperties = config.getConfigForEnv(input.getEnv());
 
@@ -51,20 +58,22 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
     String sourceDatabase = awsSecretsService.getSecret(input.getDataBaseName().getValue());
     String sourceUsername = awsSecretsService.getSecret(appConfigProperties.getSourceUserNameArn());
     String sourcePassword =
-            awsSecretsService.getSecret(appConfigProperties.getSourceUserPasswordArn());
+        awsSecretsService.getSecret(appConfigProperties.getSourceUserPasswordArn());
     String destHost = awsSecretsService.getSecret(appConfigProperties.getDestinationUrl());
     String destinationDatabase = awsSecretsService.getSecret(input.getDataBaseName().getValue());
     String destinationUsername =
-            awsSecretsService.getSecret(appConfigProperties.getDestinationUserNameArn());
+        awsSecretsService.getSecret(appConfigProperties.getDestinationUserNameArn());
     String destinationPassword =
-            awsSecretsService.getSecret(appConfigProperties.getDestinationUserPasswordArn());
+        awsSecretsService.getSecret(appConfigProperties.getDestinationUserPasswordArn());
     String collectionName = input.getCollectionName().toString();
 
-    MongoClient sourceClient = MongoClientFactory.createClient(sourceHost, sourceUsername, sourcePassword);
-    MongoClient destClient = MongoClientFactory.createClient(destHost, destinationUsername, destinationPassword);
+    MongoClient sourceClient =
+        MongoClientFactory.createClient(sourceHost, sourceUsername, sourcePassword);
+    MongoClient destClient =
+        MongoClientFactory.createClient(destHost, destinationUsername, destinationPassword);
 
     return new MongoMigrationService(
-            sourceClient, sourceDatabase, destClient, destinationDatabase, collectionName);
+        sourceClient, sourceDatabase, destClient, destinationDatabase, collectionName);
   }
 
   private static Configuration loadConfig() {
@@ -73,7 +82,7 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
 
     try (InputStream inputStream = MongoMigrationHandler.class.getResourceAsStream(CONFIG_FILE)) {
       Map<String, AppConfigProperties> configMap =
-              yamlMapper.readValue(inputStream, new TypeReference<>() {});
+          yamlMapper.readValue(inputStream, new TypeReference<>() {});
       Configuration configuration = new Configuration();
       configuration.setEnvironments(configMap);
       return configuration;
@@ -94,7 +103,7 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
     validator.validate(testInput);
     AwsSecretsService awsSecretsService = new AwsSecretServiceLocal();
     MongoMigrationService migrationService =
-            createMongoMigrationService(config, testInput, awsSecretsService);
+        createMongoMigrationService(config, testInput, awsSecretsService);
     MigrationExecutor executor = new MigrationExecutor(migrationService);
     executor.run();
     log.info("Migration process completed in local testing");

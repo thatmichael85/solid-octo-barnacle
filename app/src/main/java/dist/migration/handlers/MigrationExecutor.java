@@ -14,6 +14,60 @@ public class MigrationExecutor {
     this.migrationService = migrationService;
   }
 
+  public void getCollectionSize(String collectionName) {
+    migrationService.getCollectionSize(collectionName).block();
+  }
+
+  public void dropCollection(String collectionName) {
+    try {
+      migrationService
+          .testSourceConnectivity()
+          .flatMap(
+              result -> {
+                if (result) {
+                  return migrationService.dropDestinationCollection(collectionName);
+                } else {
+                  return Mono.error(
+                      new MigrationExecutorException("Source Connectivity Test Failed"));
+                }
+              })
+          .block();
+    } catch (Exception e) {
+      throw new MigrationExecutorException("Drop collection:" + collectionName + " Failed");
+    }
+  }
+
+  public void checkConnectivity() throws MigrationExecutorException {
+    try {
+      migrationService
+          .testSourceConnectivity()
+          .flatMap(
+              result -> {
+                if (result) {
+                  return migrationService.testDestinationConnectivity();
+                } else {
+                  return Mono.error(
+                      new MigrationExecutorException("Source Connectivity Test Failed"));
+                }
+              })
+          .flatMap(
+              result -> {
+                if (!result) {
+                  return Mono.error(
+                      new MigrationExecutorException("Destination Connectivity Test Failed"));
+                }
+                return Mono.empty();
+              })
+          .block();
+    } catch (Exception e) {
+      if (e instanceof MigrationExecutorException) {
+        throw e;
+      } else {
+        throw new MigrationExecutorException("Uncaught Error during connectivity check", e);
+      }
+    }
+  }
+
   public void run() {
     try {
       startMigration().block();
@@ -31,20 +85,19 @@ public class MigrationExecutor {
         .flatMap(
             result -> {
               if (result) {
-                // Only proceed to test destination connectivity if source connectivity test passes
                 return migrationService.testDestinationConnectivity();
               } else {
-                // If source connectivity test fails, throw an error and stop the chain
-                return Mono.error(new MigrationExecutorException("Source Connectivity Test Failed"));
+                return Mono.error(
+                    new MigrationExecutorException("Source Connectivity Test Failed"));
               }
             })
         .flatMap(
             result -> {
               if (result) {
-                // Proceed to migration only if both connectivity tests pass
                 return migrationService.migrate();
               } else {
-                return Mono.error(new MigrationExecutorException("Destination Connectivity Test Failed"));
+                return Mono.error(
+                    new MigrationExecutorException("Destination Connectivity Test Failed"));
               }
             })
         .doOnSuccess(aVoid -> log.info("Migration completed successfully"))

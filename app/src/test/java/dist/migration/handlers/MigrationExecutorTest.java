@@ -1,7 +1,7 @@
 package dist.migration.handlers;
 
-import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import dist.migration.configs.AppConfigProperties;
 import dist.migration.configs.Configuration;
@@ -9,18 +9,13 @@ import dist.migration.dtos.CollectionName;
 import dist.migration.dtos.DataBaseName;
 import dist.migration.dtos.EventType;
 import dist.migration.dtos.InputDto;
-import dist.migration.services.AwsSecretsService;
 import dist.migration.services.MongoMigrationService;
-import dist.migration.services.MongoMigrationServiceException;
 import dist.migration.validators.InputValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 class MigrationExecutorTest {
 

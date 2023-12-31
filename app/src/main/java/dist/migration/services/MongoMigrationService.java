@@ -134,6 +134,15 @@ public class MongoMigrationService {
             });
   }
 
+  public Mono<Long> getCollectionSize(String collectionName) {
+    MongoDatabase database = destClient.getDatabase(destDbName);
+    MongoCollection<Document> collection = database.getCollection(collectionName);
+
+    return Mono.from(collection.countDocuments())
+            .doOnSuccess(docCount ->
+                    logger.info("Collection {} has {} documents", collectionName, docCount));
+  }
+
   public Mono<Boolean> testSourceConnectivity() {
     return testConnection(sourceClient, "Source", sourceDbName);
   }

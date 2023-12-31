@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum EventType {
     DROP_COLLECTION("dropCollection"),
-    DRY_RUN("dryRun"),
     CHECK_CONNECTIVITY("checkConnectivity"),
     GET_COLLECTION_SIZE("getCollectionSize"),
     EXECUTE_MIGRATION("executeMigration");
