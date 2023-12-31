@@ -139,8 +139,8 @@ public class MongoMigrationService {
     MongoCollection<Document> collection = database.getCollection(collectionName);
 
     return Mono.from(collection.countDocuments())
-            .doOnSuccess(docCount ->
-                    logger.info("Collection {} has {} documents", collectionName, docCount));
+        .doOnSuccess(
+            docCount -> logger.info("Collection {} has {} documents", collectionName, docCount));
   }
 
   public Mono<Boolean> testSourceConnectivity() {
