@@ -9,10 +9,9 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.mongodb.reactivestreams.client.MongoClient;
 import dist.migration.configs.AppConfigProperties;
 import dist.migration.configs.Configuration;
-import dist.migration.dtos.CollectionName;
-import dist.migration.dtos.DataBaseName;
 import dist.migration.dtos.EventType;
 import dist.migration.dtos.InputDto;
+import dist.migration.dtos.ResponseDto;
 import dist.migration.factories.MongoClientFactory;
 import dist.migration.services.*;
 import dist.migration.validators.InputValidator;
@@ -28,25 +27,43 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
 
   @Override
   public String handleRequest(InputDto input, Context context) {
-    MDC.put("AWSRequestId", context.getAwsRequestId());
-    log.info("Received {}", input);
-    Configuration config = loadConfig();
-    InputValidator validator = new InputValidator(config);
-    validator.validate(input);
-    AwsSecretsServiceImpl awsSecretsService = new AwsSecretsServiceImpl();
-    MongoMigrationService migrationService =
-        createMongoMigrationService(config, input, awsSecretsService);
-    MigrationExecutor executor = new MigrationExecutor(migrationService);
-    switch (input.getEventType()) {
-      case DROP_COLLECTION -> executor.dropCollection(input.getCollectionName().toString());
-      case CHECK_CONNECTIVITY -> executor.checkConnectivity();
-      case GET_COLLECTION_SIZE -> executor.getCollectionSize(input.getCollectionName().toString());
-      case EXECUTE_MIGRATION -> executor.run();
-    }
+    try {
+      MDC.put("AWSRequestId", context.getAwsRequestId());
+      log.info("Received {}", input);
+      Configuration config = loadConfig();
+      InputValidator validator = new InputValidator(config);
+      validator.validate(input);
+      AwsSecretsServiceImpl awsSecretsService = new AwsSecretsServiceImpl();
+      MongoMigrationService migrationService =
+          createMongoMigrationService(config, input, awsSecretsService);
+      MigrationExecutor executor = new MigrationExecutor(migrationService);
+      switch (input.getEventType()) {
+        case dropCollection -> executor.dropCollection(input.getCollectionName());
+        case checkConnectivity -> executor.checkConnectivity();
+        case getCollectionSize -> executor.getCollectionSize(input.getCollectionName());
+        case executeMigration -> executor.run();
+      }
 
-    executor.run();
-    MDC.clear();
-    return context.toString();
+      executor.run();
+      MDC.clear();
+      return ResponseDto.builder()
+          .awsContext(context)
+          .dataBaseName(input.getDataBaseName())
+          .collectionName(input.getCollectionName())
+          .eventType(input.getEventType())
+          .result("Successful")
+          .build()
+          .toString();
+    } catch (Exception e) {
+      return ResponseDto.builder()
+          .awsContext(context)
+          .dataBaseName(input.getDataBaseName())
+          .collectionName(input.getCollectionName())
+          .eventType(input.getEventType())
+          .result("Failed with: " + e.getMessage())
+          .build()
+          .toString();
+    }
   }
 
   private static MongoMigrationService createMongoMigrationService(
@@ -54,18 +71,19 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
 
     AppConfigProperties appConfigProperties = config.getConfigForEnv(input.getEnv());
 
-    String sourceHost = awsSecretsService.getSecret(appConfigProperties.getSourceUrl());
-    String sourceDatabase = awsSecretsService.getSecret(input.getDataBaseName().getValue());
+    String sourceHost = appConfigProperties.getSourceUrl();
+    String sourceDatabase = input.getDataBaseName();
     String sourceUsername = awsSecretsService.getSecret(appConfigProperties.getSourceUserNameArn());
     String sourcePassword =
         awsSecretsService.getSecret(appConfigProperties.getSourceUserPasswordArn());
-    String destHost = awsSecretsService.getSecret(appConfigProperties.getDestinationUrl());
-    String destinationDatabase = awsSecretsService.getSecret(input.getDataBaseName().getValue());
+
+    String destHost = appConfigProperties.getDestinationUrl();
+    String destinationDatabase = input.getDataBaseName();
     String destinationUsername =
         awsSecretsService.getSecret(appConfigProperties.getDestinationUserNameArn());
     String destinationPassword =
         awsSecretsService.getSecret(appConfigProperties.getDestinationUserPasswordArn());
-    String collectionName = input.getCollectionName().toString();
+    String collectionName = input.getCollectionName();
 
     MongoClient sourceClient =
         MongoClientFactory.createClient(sourceHost, sourceUsername, sourcePassword);
@@ -95,9 +113,9 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
   public static void main(String[] args) {
     Configuration config = loadConfig();
     InputDto testInput = new InputDto();
-    testInput.setDataBaseName(DataBaseName.DEFAULT_DATA_BASE);
-    testInput.setCollectionName(CollectionName.yourCollectionName);
-    testInput.setEventType(EventType.EXECUTE_MIGRATION);
+    testInput.setDataBaseName("DefaultDatabase");
+    testInput.setCollectionName("yourCollectionName");
+    testInput.setEventType(EventType.executeMigration);
     testInput.setEnv("dev");
     InputValidator validator = new InputValidator(config);
     validator.validate(testInput);

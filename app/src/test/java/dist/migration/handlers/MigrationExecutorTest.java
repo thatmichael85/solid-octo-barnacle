@@ -5,8 +5,6 @@ import static org.mockito.Mockito.*;
 
 import dist.migration.configs.AppConfigProperties;
 import dist.migration.configs.Configuration;
-import dist.migration.dtos.CollectionName;
-import dist.migration.dtos.DataBaseName;
 import dist.migration.dtos.EventType;
 import dist.migration.dtos.InputDto;
 import dist.migration.services.MongoMigrationService;
@@ -37,9 +35,9 @@ class MigrationExecutorTest {
         MockitoAnnotations.openMocks(this);
         inputDto = new InputDto();
         inputDto.setEnv("test");
-        inputDto.setEventType(EventType.EXECUTE_MIGRATION);
-        inputDto.setCollectionName(CollectionName.COLLECTION_ONE);
-        inputDto.setDataBaseName(DataBaseName.DEFAULT_DATA_BASE);
+        inputDto.setEventType(EventType.executeMigration);
+        inputDto.setCollectionName("testCollection");
+        inputDto.setDataBaseName("testDatabase");
         executor = new MigrationExecutor(mongoMigrationService);
     }
     @Test

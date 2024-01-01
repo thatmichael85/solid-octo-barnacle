@@ -2,8 +2,6 @@ package dist.migration.validators;
 
 import dist.migration.configs.AppConfigProperties;
 import dist.migration.configs.Configuration;
-import dist.migration.dtos.CollectionName;
-import dist.migration.dtos.DataBaseName;
 import dist.migration.dtos.InputDto;
 
 public class InputValidator {
@@ -26,22 +24,22 @@ public class InputValidator {
     }
   }
 
-  private void validateDatabaseName(String env, DataBaseName dataBaseName) {
+  private void validateDatabaseName(String env, String dataBaseName) {
     AppConfigProperties envConfig = configuration.getConfigForEnv(env);
     if (envConfig == null || dataBaseName == null) {
       throw new InputValidatorException("Invalid environment or database name is null");
     }
-    if (!envConfig.getValidDatabases().contains(dataBaseName.getValue())) {
+    if (!envConfig.getValidDatabases().contains(dataBaseName)) {
       throw new InputValidatorException(
-          "Invalid database name: " + dataBaseName.getValue() + " for environment: " + env);
+          "Invalid database name: " + dataBaseName + " for environment: " + env);
     }
   }
 
-  private void validateCollectionName(String env, CollectionName collectionName) {
+  private void validateCollectionName(String env, String collectionName) {
     AppConfigProperties envConfig = configuration.getConfigForEnv(env);
     if (envConfig == null
         || collectionName == null
-        || !envConfig.getValidCollections().contains(collectionName.name())) {
+        || !envConfig.getValidCollections().contains(collectionName)) {
       throw new InputValidatorException(
           "Invalid collection name: " + collectionName + " for environment: " + env);
     }

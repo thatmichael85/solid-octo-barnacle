@@ -8,26 +8,22 @@ dev:
   destinationUserNameArn: "destUsername"
   destinationUserPasswordArn: "destPassword"
   validCollections:
-    - "COLLECTION_ONE"
-    - "COLLECTION_TWO"
     - "yourCollectionName"
   validDatabases:
-    - DefaultDatabase
+    - "DefaultDatabase"
 qa:
   sourceUrl: "MongoSource:27017"
   sourceDatabase: "DefaultDatabase"
-  sourceUserNameArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:sourceUsername-fUWLtW"
-  sourceUserPasswordArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:sourcePassword-OKRKUt"
+  sourceUserNameArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:sourceUsername-BSYxJG"
+  sourceUserPasswordArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:sourcePassword-BIsDZo"
   destinationUrl: "MongoDestination:27017"
   destinationDatabase: "DefaultDatabase"
-  destinationUserNameArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:destUsername-xPBfqU"
-  destinationUserPasswordArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:destPassword-trTUWu"
+  destinationUserNameArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:destUsername-HtFJex"
+  destinationUserPasswordArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:destPassword-OonHRP"
   validCollections:
-    - "COLLECTION_ONE"
-    - "COLLECTION_TWO"
     - "yourCollectionName"
   validDatabases:
-    - DefaultDatabase
+    - "DefaultDatabase"
 prod:
   sourceUrl: "mongodb://prod-source-server"
   sourceDatabase: "DefaultDatabase"
@@ -38,6 +34,6 @@ prod:
   destinationUserNameArn: "arn:aws:secretsmanager:prod:destination:username"
   destinationUserPasswordArn: "arn:aws:secretsmanager:prod:destination:password"
   validCollections:
-    - "COLLECTION_ONE"
-    - "COLLECTION_TWO"
     - "yourCollectionName"
+  validDatabases:
+    - "DefaultDatabase"
