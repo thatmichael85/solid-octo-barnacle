@@ -14,12 +14,12 @@ dev:
 qa:
   sourceUrl: "MongoSource:27017"
   sourceDatabase: "DefaultDatabase"
-  sourceUserNameArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:sourceUsername-BSYxJG"
-  sourceUserPasswordArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:sourcePassword-BIsDZo"
+  sourceUserNameArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:sourceUsername-BViZeQ"
+  sourceUserPasswordArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:sourcePassword-roSjDI"
   destinationUrl: "MongoDestination:27017"
   destinationDatabase: "DefaultDatabase"
-  destinationUserNameArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:destUsername-HtFJex"
-  destinationUserPasswordArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:destPassword-OonHRP"
+  destinationUserNameArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:destUsername-fwqsMU"
+  destinationUserPasswordArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:destPassword-LjzfLg"
   validCollections:
     - "yourCollectionName"
   validDatabases:

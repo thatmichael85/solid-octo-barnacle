@@ -21,14 +21,14 @@ public class MigrationExecutor {
   public void dropCollection(String collectionName) {
     try {
       migrationService
-          .testSourceConnectivity()
+          .testDestinationConnectivity()
           .flatMap(
               result -> {
                 if (result) {
                   return migrationService.dropDestinationCollection(collectionName);
                 } else {
                   return Mono.error(
-                      new MigrationExecutorException("Source Connectivity Test Failed"));
+                      new MigrationExecutorException("Destination Connectivity Test Failed"));
                 }
               })
           .block();

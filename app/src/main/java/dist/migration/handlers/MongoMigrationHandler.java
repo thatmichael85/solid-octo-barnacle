@@ -43,8 +43,6 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
         case getCollectionSize -> executor.getCollectionSize(input.getCollectionName());
         case executeMigration -> executor.run();
       }
-
-      executor.run();
       MDC.clear();
       return ResponseDto.builder()
           .awsContext(context)
