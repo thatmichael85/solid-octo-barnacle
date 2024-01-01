@@ -29,7 +29,7 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
   public String handleRequest(InputDto input, Context context) {
     try {
       MDC.put("AWSRequestId", context.getAwsRequestId());
-      log.info("Received {}", input);
+      log.info("Received {}, AWS timeLimit {} and memoryLimit {}", input, context.getRemainingTimeInMillis(), context.getMemoryLimitInMB());
       Configuration config = loadConfig();
       InputValidator validator = new InputValidator(config);
       validator.validate(input);
