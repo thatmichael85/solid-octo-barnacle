@@ -23,7 +23,7 @@ def insert_batch(client_url, db_name, collection_name, batch_data, stop_event):
     return len(result.inserted_ids) * len(BSON.encode(batch[0]))
 
 def main():
-    client_url = 'mongodb://sourceUsername:sourcePassword@127.0.0.1:27017/'
+    client_url = 'mongodb://localhost:27017/'
     db_name = 'DefaultDatabase'
     collection_name = 'yourCollectionName'
 
