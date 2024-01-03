@@ -8,7 +8,10 @@ start_container() {
     local env_vars=$4
     local volumes=$5
     local network=$6
-
+    local extra_commands=$7
+    
+    echo Create folder if not exist
+    mkdir -p $container_name
     # Check if the container already exists
     if podman container exists $container_name; then
         echo "Container $container_name exists. Starting if not running..."
@@ -34,11 +37,11 @@ start_container \
 
 # MongoSource
 start_container \
-    "MongoSource" \
-    "mongo" \
+    "mongosource" \
+    "mongo:4.4" \
     "-p 27017:27017" \
     "-e MONGO_INITDB_ROOT_USERNAME=sourceUsername -e MONGO_INITDB_ROOT_PASSWORD=sourcePassword -e MONGO_INITDB_DATABASE=DefaultDatabase" \
-    "-v mongo-source-data:/data/db -v ${PWD}/mongo-init/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js" \
+    "-v mongosource:/data/db -v ${PWD}/mongo-init/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js" \
     "--network mongo-network"
 
 # MongoExpress
@@ -46,24 +49,25 @@ start_container \
     "mongo-express" \
     "mongo-express" \
     "-p 8081:8081" \
-    "-e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://sourceUsername:sourcePassword@MongoSource:27017/" \
+    "-e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://sourceUsername:sourcePassword@mongosource:27017/" \
     "--network mongo-network"
 
 # MongoDestination
 start_container \
-    "MongoDestination" \
-    "mongo" \
-    "-p 27018:27017" \
+    "mongodestination" \
+    "mongo:6.0." \
+    "-p 27018:27018" \
     "-e MONGO_INITDB_ROOT_USERNAME=destUsername -e MONGO_INITDB_ROOT_PASSWORD=destPassword -e MONGO_INITDB_DATABASE=DefaultDatabase" \
-    "-v mongo-dest-data:/data/db -v ${PWD}/mongo-init/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js" \
-    "--network mongo-network"
+    "-v mongodestination:/data/db -v ${PWD}/mongo-init/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js" \
+    "--network mongo-network" \
+    "mongod --port 27018"
 
 # Second MongoExpress
 start_container \
     "mongo-express2" \
     "mongo-express" \
     "-p 8082:8081" \
-    "-e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://destUsername:destPassword@MongoDestination:27017/" \
+    "-e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://destUsername:destPassword@mongodestination:27017/" \
     "--network mongo-network"
 
 echo "All containers are set up."
