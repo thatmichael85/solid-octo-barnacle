@@ -51,7 +51,7 @@ start_container \
     "mongo-express2" \
     "mongo-express" \
     "-p 8082:8082" \
-    "-e PORT=8082 -e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://localhost:27018/" \
+    "-e PORT=8082 -e HTTP_PROXY= -e HTTPS_PROXY= -e http_proxy= -e https_proxy= -e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://localhost:27018/" \
     "--network host"
 
 echo creating volume mongosource
@@ -70,7 +70,7 @@ start_container \
     "mongo-express" \
     "mongo-express" \
     "-p 8081:8081" \
-    "-e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://localhost:27017/" \
+    "-e HTTP_PROXY= -e HTTPS_PROXY= -e http_proxy= -e https_proxy= -e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://localhost:27017/" \
     "--network host"
 
 echo "All containers are set up."

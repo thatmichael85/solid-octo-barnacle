@@ -1,12 +1,12 @@
 dev:
   sourceUrl: "localhost:27017"
   sourceDatabase: "DefaultDatabase"
-  sourceUserNameArn: "sourceUsername"
-  sourceUserPasswordArn: "sourcePassword"
+  sourceUserNameArn: ""
+  sourceUserPasswordArn: ""
   destinationUrl: "localhost:27018"
   destinationDatabase: "DefaultDatabase"
-  destinationUserNameArn: "destUsername"
-  destinationUserPasswordArn: "destPassword"
+  destinationUserNameArn: ""
+  destinationUserPasswordArn: ""
   validCollections:
     - "yourCollectionName"
   validDatabases:
