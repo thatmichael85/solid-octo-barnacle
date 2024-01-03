@@ -88,3 +88,8 @@ tasks.register('buildZip', Zip) {
         from(configurations.runtimeClasspath)
     }
 }
+
+//For localtesting
+tasks.withType(JavaExec) {
+    jvmArgs = ['-Xms1g', '-Xmx1g']
+}

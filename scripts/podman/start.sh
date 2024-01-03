@@ -40,10 +40,10 @@ start_container \
     "mongosource" \
     "mongo:4.4" \
     "-p 27017:27017" \
-    "-e MONGO_INITDB_ROOT_USERNAME=sourceUsername -e MONGO_INITDB_ROOT_PASSWORD=sourcePassword -e MONGO_INITDB_DATABASE=DefaultDatabase" \
+    "-e MONGO_INITDB_ROOT_USERNAME=sourceUsername -e MONGO_INITDB_ROOT_PASSWORD=sourcePassword" \
     "-v mongosource:/data/db" \
     "--network host"
-
+sleep 2
 # MongoExpress
 start_container \
     "mongo-express" \
@@ -57,11 +57,11 @@ start_container \
     "mongodestination" \
     "mongo:6.0.12" \
     "-p 27018:27018" \
-    "-e MONGO_INITDB_ROOT_USERNAME=destUsername -e MONGO_INITDB_ROOT_PASSWORD=destPassword -e MONGO_INITDB_DATABASE=DefaultDatabase" \
+    "-e MONGO_INITDB_ROOT_USERNAME=destUsername -e MONGO_INITDB_ROOT_PASSWORD=destPassword" \
     "-v mongodestination:/data/db" \
     "--network host" \
     "mongod --port 27018"
-
+sleep 2
 # Second MongoExpress
 start_container \
     "mongo-express2" \
