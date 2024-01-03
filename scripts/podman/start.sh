@@ -9,9 +9,7 @@ start_container() {
     local volumes=$5
     local network=$6
     local extra_commands=$7
-    
-    echo Create folder if not exist
-    mkdir -p $container_name
+
     # Check if the container already exists
     if podman container exists $container_name; then
         echo "Container $container_name exists. Starting if not running..."
@@ -35,14 +33,15 @@ start_container() {
 #     "-v ${PWD}/volume:/var/lib/localstack -v /var/run/docker.sock:/var/run/docker.sock" \
 #     "--network mongo-network"
 
-
+echo creating volume mongodestination
+podman volume create mongodestination
 # MongoDestination
 start_container \
     "mongodestination" \
     "mongo:6.0.12" \
     "-p 27018:27018" \
     "-e MONGO_INITDB_ROOT_USERNAME=destUsername -e MONGO_INITDB_ROOT_PASSWORD=destPassword" \
-    "-v ${PWD}/mongodestination:/data/db" \
+    "-v mongodestination:/data/db" \
     "--network host" \
     "--port 27018"
 sleep 2
@@ -55,13 +54,15 @@ start_container \
     "-e PORT=8082 -e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://destUsername:destPassword@localhost:27018/" \
     "--network host"
 
+echo creating volume mongosource
+podman volume create mongosource
 # MongoSource
 start_container \
     "mongosource" \
     "mongo:4.4" \
     "-p 27017:27017" \
     "-e MONGO_INITDB_ROOT_USERNAME=sourceUsername -e MONGO_INITDB_ROOT_PASSWORD=sourcePassword" \
-    "-v ${PWD}/mongosource:/data/db" \
+    "-v mongosource:/data/db" \
     "--network host"
 sleep 2
 # MongoExpress
