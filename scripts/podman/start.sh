@@ -18,22 +18,22 @@ start_container() {
         podman start $container_name
     else
         echo "Creating and starting container $container_name..."
-        podman run -d --name $container_name $ports $env_vars $volumes $network $image
+        podman run -d --name $container_name $ports $env_vars $volumes $network $image $extra_commands
     fi
 }
 
 # Create network if it doesn't exist
-podman network exists mongo-network || podman network create mongo-network
+# podman network exists mongo-network || podman network create mongo-network
 
 # Start or create containers
 # LocalStack
-start_container \
-    "localstack-main" \
-    "localstack/localstack" \
-    "-p 4566:4566 -p 4510-4559:4510-4559" \
-    "-e DEBUG=1" \
-    "-v ${PWD}/volume:/var/lib/localstack -v /var/run/docker.sock:/var/run/docker.sock" \
-    "--network mongo-network"
+# start_container \
+#     "localstack-main" \
+#     "localstack/localstack" \
+#     "-p 4566:4566 -p 4510-4559:4510-4559" \
+#     "-e DEBUG=1" \
+#     "-v ${PWD}/volume:/var/lib/localstack -v /var/run/docker.sock:/var/run/docker.sock" \
+#     "--network mongo-network"
 
 # MongoSource
 start_container \
@@ -42,32 +42,32 @@ start_container \
     "-p 27017:27017" \
     "-e MONGO_INITDB_ROOT_USERNAME=sourceUsername -e MONGO_INITDB_ROOT_PASSWORD=sourcePassword -e MONGO_INITDB_DATABASE=DefaultDatabase" \
     "-v mongosource:/data/db -v ${PWD}/mongo-init/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js" \
-    "--network mongo-network"
+    "--network host"
 
 # MongoExpress
 start_container \
     "mongo-express" \
     "mongo-express" \
     "-p 8081:8081" \
-    "-e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://sourceUsername:sourcePassword@mongosource:27017/" \
-    "--network mongo-network"
+    "-e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://sourceUsername:sourcePassword@localhost:27017/" \
+    "--network host"
 
 # MongoDestination
 start_container \
     "mongodestination" \
-    "mongo:6.0." \
+    "mongo:6.0.12" \
     "-p 27018:27018" \
     "-e MONGO_INITDB_ROOT_USERNAME=destUsername -e MONGO_INITDB_ROOT_PASSWORD=destPassword -e MONGO_INITDB_DATABASE=DefaultDatabase" \
-    "-v mongodestination:/data/db -v ${PWD}/mongo-init/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js" \
-    "--network mongo-network" \
+    "-v mongodestination:/data/db" \
+    "--network host" \
     "mongod --port 27018"
 
 # Second MongoExpress
 start_container \
     "mongo-express2" \
     "mongo-express" \
-    "-p 8082:8081" \
-    "-e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://destUsername:destPassword@mongodestination:27017/" \
-    "--network mongo-network"
+    "-p 8082:8082" \
+    "-e PORT=8082 -e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://destUsername:destPassword@localhost:27018/" \
+    "--network host"
 
 echo "All containers are set up."
