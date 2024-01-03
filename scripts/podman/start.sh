@@ -35,13 +35,33 @@ start_container() {
 #     "-v ${PWD}/volume:/var/lib/localstack -v /var/run/docker.sock:/var/run/docker.sock" \
 #     "--network mongo-network"
 
+
+# MongoDestination
+start_container \
+    "mongodestination" \
+    "mongo:6.0.12" \
+    "-p 27018:27018" \
+    "-e MONGO_INITDB_ROOT_USERNAME=destUsername -e MONGO_INITDB_ROOT_PASSWORD=destPassword" \
+    "-v ${PWD}/mongodestination:/data/db" \
+    "--network host" \
+    "--port 27018"
+sleep 2
+
+# Second MongoExpress
+start_container \
+    "mongo-express2" \
+    "mongo-express" \
+    "-p 8082:8082" \
+    "-e PORT=8082 -e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://destUsername:destPassword@localhost:27018/" \
+    "--network host"
+
 # MongoSource
 start_container \
     "mongosource" \
     "mongo:4.4" \
     "-p 27017:27017" \
     "-e MONGO_INITDB_ROOT_USERNAME=sourceUsername -e MONGO_INITDB_ROOT_PASSWORD=sourcePassword" \
-    "-v mongosource:/data/db" \
+    "-v ${PWD}/mongosource:/data/db" \
     "--network host"
 sleep 2
 # MongoExpress
@@ -50,24 +70,6 @@ start_container \
     "mongo-express" \
     "-p 8081:8081" \
     "-e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://sourceUsername:sourcePassword@localhost:27017/" \
-    "--network host"
-
-# MongoDestination
-start_container \
-    "mongodestination" \
-    "mongo:6.0.12" \
-    "-p 27018:27018" \
-    "-e MONGO_INITDB_ROOT_USERNAME=destUsername -e MONGO_INITDB_ROOT_PASSWORD=destPassword" \
-    "-v mongodestination:/data/db" \
-    "--network host" \
-    "mongod --port 27018"
-sleep 2
-# Second MongoExpress
-start_container \
-    "mongo-express2" \
-    "mongo-express" \
-    "-p 8082:8082" \
-    "-e PORT=8082 -e ME_CONFIG_BASICAUTH_USERNAME=root -e ME_CONFIG_BASICAUTH_PASSWORD=example -e ME_CONFIG_MONGODB_URL=mongodb://destUsername:destPassword@localhost:27018/" \
     "--network host"
 
 echo "All containers are set up."
