@@ -41,7 +41,7 @@ start_container \
     "mongo:4.4" \
     "-p 27017:27017" \
     "-e MONGO_INITDB_ROOT_USERNAME=sourceUsername -e MONGO_INITDB_ROOT_PASSWORD=sourcePassword -e MONGO_INITDB_DATABASE=DefaultDatabase" \
-    "-v mongosource:/data/db -v ${PWD}/mongo-init/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js" \
+    "-v mongosource:/data/db" \
     "--network host"
 
 # MongoExpress
