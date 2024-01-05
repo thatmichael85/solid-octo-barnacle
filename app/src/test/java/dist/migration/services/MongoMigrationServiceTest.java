@@ -1,9 +1,13 @@
 package dist.migration.services;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.reactivestreams.client.FindPublisher;
+import com.mongodb.reactivestreams.client.ListIndexesPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
@@ -19,17 +23,25 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 class MongoMigrationServiceTest {
 
-  @Mock private MongoClient mockSourceClient;
-  @Mock private MongoClient mockDestClient;
-  @Mock private MongoDatabase mockSourceDatabase;
-  @Mock private MongoDatabase mockDestDatabase;
-  @Mock private MongoCollection<Document> mockSourceCollection;
-  @Mock private MongoCollection<Document> mockDestCollection;
+  @Mock
+  private MongoClient mockSourceClient;
+  @Mock
+  private MongoClient mockDestClient;
+  @Mock
+  private MongoDatabase mockSourceDatabase;
+  @Mock
+  private MongoDatabase mockDestDatabase;
+  @Mock
+  private MongoCollection<Document> mockSourceCollection;
+  @Mock
+  private MongoCollection<Document> mockDestCollection;
 
   private AutoCloseable closeable;
   private MongoMigrationService service;
@@ -41,9 +53,8 @@ class MongoMigrationServiceTest {
     when(mockDestClient.getDatabase(anyString())).thenReturn(mockDestDatabase);
     when(mockSourceDatabase.getCollection(anyString())).thenReturn(mockSourceCollection);
     when(mockDestDatabase.getCollection(anyString())).thenReturn(mockDestCollection);
-    service =
-        new MongoMigrationService(
-            mockSourceClient, "sourceDb", mockDestClient, "destDb", "testCollection");
+    service = new MongoMigrationService(
+        mockSourceClient, "sourceDb", mockDestClient, "destDb", "testCollection");
   }
 
   @AfterEach
@@ -115,32 +126,53 @@ class MongoMigrationServiceTest {
     // Mocking the publisher - very difficult to do
     FindPublisher<Document> findPublisherMock = mock(FindPublisher.class);
     doAnswer(
-            invocation -> {
-              Subscriber<? super Document> s = invocation.getArgument(0);
-              s.onSubscribe(
-                  new Subscription() {
-                    private boolean isCancelled = false;
+        invocation -> {
+          Subscriber<Document> s = invocation.getArgument(0);
+          s.onSubscribe(
+              new Subscription() {
+                private boolean isCancelled = false;
 
-                    @Override
-                    public void request(long n) {
-                      if (!isCancelled && n > 0) {
-                        s.onNext(new Document("field1", "value1"));
-                        s.onNext(new Document("field2", "value2"));
-                        s.onNext(new Document("field3", "value3"));
-                        s.onComplete();
-                      }
-                    }
+                @Override
+                public void request(long n) {
+                  if (!isCancelled && n > 0) {
+                    s.onNext(new Document("key", "value1"));
+                    s.onComplete();
+                  }
+                }
 
-                    @Override
-                    public void cancel() {
-                      isCancelled = true;
-                    }
-                  });
-              return null;
-            })
+                @Override
+                public void cancel() {
+                  isCancelled = true;
+                }
+              });
+          return null;
+        })
         .when(findPublisherMock)
         .subscribe(any(Subscriber.class));
 
+    ListIndexesPublisher<Document> listIndexesPublisherMock = mock(ListIndexesPublisher.class);
+    doAnswer(invocation -> {
+      Subscriber<Document> s = invocation.getArgument(0);
+      s.onSubscribe(new Subscription() {
+        private boolean isCancelled = false;
+
+        @Override
+        public void request(long n) {
+          if (!isCancelled && n > 0) {
+            s.onComplete();
+          }
+        }
+
+        @Override
+        public void cancel() {
+          isCancelled = true;
+        }
+      });
+      return null;
+    }).when(listIndexesPublisherMock).subscribe(any());
+
+    when(mockSourceDatabase.listCollectionNames()).thenReturn(Flux.just("collection1"));
+    when(mockSourceCollection.listIndexes()).thenReturn(listIndexesPublisherMock);
     when(mockSourceCollection.find()).thenReturn(findPublisherMock);
 
     Map<Integer, BsonValue> insertedIds = new HashMap<>();
@@ -155,4 +187,5 @@ class MongoMigrationServiceTest {
 
     StepVerifier.create(service.migrate()).expectComplete().verify();
   }
+
 }
