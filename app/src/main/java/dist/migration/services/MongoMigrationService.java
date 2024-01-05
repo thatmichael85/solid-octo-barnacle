@@ -1,9 +1,11 @@
 package dist.migration.services;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -37,55 +39,58 @@ public class MongoMigrationService {
 
   public Mono<Void> migrate() {
     long startTime = System.currentTimeMillis();
-
     MongoDatabase sourceDb = sourceClient.getDatabase(sourceDbName);
-    MongoCollection<Document> sourceCollection = sourceDb.getCollection(collectionName);
-
     MongoDatabase destDb = destClient.getDatabase(destDbName);
-    MongoCollection<Document> destCollection = destDb.getCollection(collectionName);
 
     AtomicLong totalDocumentsMigrated = new AtomicLong(0);
     AtomicLong totalSizeMigrated = new AtomicLong(0);
 
-    return Flux.from(sourceCollection.find())
-        .buffer(BATCH_SIZE)
-        .flatMap(
-            batch -> {
-              long batchTotalSize =
-                  batch.stream()
-                      .mapToLong(doc -> doc.toJson().getBytes(StandardCharsets.UTF_8).length)
-                      .sum();
-              totalSizeMigrated.addAndGet(batchTotalSize);
-              return destCollection.insertMany(batch);
-            })
-        .onErrorMap(
-            ex ->
-                new MongoMigrationServiceException(
-                    "Something went wrong on inserting this batch...", ex))
-        .doOnNext(
-            insertManyResult -> {
-              long count =
-                  totalDocumentsMigrated.addAndGet(insertManyResult.getInsertedIds().size());
-              logger.info("Migrated " + count + " documents so far...");
-            })
-        .then(
-            Mono.zip(
-                Mono.from(sourceCollection.countDocuments()),
-                Mono.from(destCollection.countDocuments())))
-        .flatMap(
-            t -> {
-              logger.info(
-                  "Completed migration. Source total Doc count is: {}, Destination total Doc count is: {}",
-                  t.getT1(),
-                  t.getT2());
-              return Mono.empty();
-            })
+    return Flux.from(sourceDb.listCollectionNames())
+        .flatMap(collectionName -> {
+          MongoCollection<Document> sourceCollection = sourceDb.getCollection(collectionName);
+          MongoCollection<Document> destCollection = destDb.getCollection(collectionName);
+
+          return Flux.from(sourceCollection.listIndexes())
+              .collectList()
+              .flatMap(indexes -> createIndices(destCollection, indexes))
+              .thenMany(Flux.from(sourceCollection.find()))
+              .buffer(BATCH_SIZE)
+              .flatMap(batch -> {
+                long batchTotalSize = batch.stream()
+                    .mapToLong(doc -> doc.toJson().getBytes(StandardCharsets.UTF_8).length)
+                    .sum();
+                totalSizeMigrated.addAndGet(batchTotalSize);
+                return destCollection.insertMany(batch);
+              })
+              .onErrorMap(ex -> new MongoMigrationServiceException(
+                  "Error during data migration for collection: " + collectionName, ex))
+              .doOnNext(insertManyResult -> {
+                long count = totalDocumentsMigrated.addAndGet(insertManyResult.getInsertedIds().size());
+                logger.info("Migrated " + count + " documents so far in collection: " + collectionName);
+              })
+              .then(Mono.fromRunnable(() -> cleanUp(startTime, destDbName, collectionName, totalDocumentsMigrated, totalSizeMigrated)));        }, 2) //2 collections at a time at most.
         .then()
-        .doOnTerminate(() -> cleanUp(startTime, totalDocumentsMigrated, totalSizeMigrated));
+        .doOnTerminate(() -> {
+          logger.info("Closing source and dest clients");
+          sourceClient.close();
+          destClient.close();
+          logger.info("Everything completed in {}.", (System.currentTimeMillis() - startTime)/1000);
+        });
+  }
+
+  private Mono<Void> createIndices(MongoCollection<Document> collection, List<Document> indexes) {
+    return Flux.fromIterable(indexes)
+        .flatMap(index -> {
+          Document indexKeys = (Document) index.get("key");
+          IndexOptions options = new IndexOptions();
+          // Set other index options as needed
+          return Mono.from(collection.createIndex(indexKeys, options));
+        })
+        .then();
   }
 
   private void cleanUp(
-      long startTime, AtomicLong totalDocumentsMigrated, AtomicLong totalSizeMigrated) {
+      long startTime, String destDbName, String collectionName, AtomicLong totalDocumentsMigrated, AtomicLong totalSizeMigrated) {
     long endTime = System.currentTimeMillis();
     long totalTimeInSeconds = (endTime - startTime) / 1000;
     double totalSizeInGB = totalSizeMigrated.get() / (1024.0 * 1024.0 * 1024.0);
@@ -102,13 +107,6 @@ public class MongoMigrationService {
             + ", Total Size: "
             + totalSizeInGB
             + " GB");
-
-    if (sourceClient != null) {
-      sourceClient.close();
-    }
-    if (destClient != null) {
-      destClient.close();
-    }
   }
 
   public Mono<Void> dropDestinationCollection(String collectionName) {
@@ -117,16 +115,14 @@ public class MongoMigrationService {
 
     return Mono.from(destCollection.drop())
         .doOnSuccess(
-            aVoid ->
-                logger.info(
-                    "Collection '"
-                        + collectionName
-                        + "' dropped successfully in destination database"))
+            aVoid -> logger.info(
+                "Collection '"
+                    + collectionName
+                    + "' dropped successfully in destination database"))
         .doOnError(
-            e ->
-                logger.error(
-                    "Error dropping collection '" + collectionName + "' in destination database",
-                    e))
+            e -> logger.error(
+                "Error dropping collection '" + collectionName + "' in destination database",
+                e))
         .then()
         .doFinally(
             signalType -> {

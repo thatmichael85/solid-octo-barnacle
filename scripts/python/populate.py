@@ -29,7 +29,7 @@ def insert_data_into_collection(collection_name, stop_event):
     client_url = 'mongodb://localhost:27017/'
     mongo_client = MongoClient(client_url)
     db_name = 'DefaultDatabase'
-    target_size = 1 * 1024 * 1024 * 1024  # GB in bytes
+    target_size = 3 * 1024 * 1024 * 1024  # GB in bytes
     document_size = 1024 * 10  # Size of each document in bytes (approximate)
     batch_size = 500  # Number of documents to insert at once
     total_size = 0
@@ -47,11 +47,11 @@ def insert_data_into_collection(collection_name, stop_event):
     print(f"Insertion into {collection_name} stopped or completed.")
 
 def main():
-    collection_names = ['yourCollectionName', 'Collection2', 'Collection3']  # Collection names
+    collection_names = ['yourCollectionName', 'Collection2', 'Collection3', 'AnotherOne']  # Collection names
     stop_event = Event()
 
     try:
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        with ThreadPoolExecutor(max_workers=5) as executor:
             for collection_name in collection_names:
                 executor.submit(insert_data_into_collection, collection_name, stop_event)
     except KeyboardInterrupt:

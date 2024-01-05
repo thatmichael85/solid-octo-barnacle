@@ -91,5 +91,5 @@ tasks.register('buildZip', Zip) {
 
 //For localtesting
 tasks.withType(JavaExec) {
-    jvmArgs = ['-Xms1g', '-Xmx1g']
+    jvmArgs = ['-Xms3g', '-Xmx3g']
 }
