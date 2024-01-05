@@ -19,7 +19,7 @@ public class InputValidator {
   }
 
   private void validateEnvironment(String env) {
-    if (!("dev".equals(env) || "qa".equals(env) || "prod".equals(env))) {
+    if (!("local".equals(env)||"dev".equals(env) || "qa".equals(env) || "prod".equals(env))) {
       throw new InputValidatorException("Invalid environment: " + env);
     }
   }
@@ -36,9 +36,11 @@ public class InputValidator {
   }
 
   private void validateCollectionName(String env, String collectionName) {
+    if(collectionName == null) {
+      return;
+    }
     AppConfigProperties envConfig = configuration.getConfigForEnv(env);
     if (envConfig == null
-        || collectionName == null
         || !envConfig.getValidCollections().contains(collectionName)) {
       throw new InputValidatorException(
           "Invalid collection name: " + collectionName + " for environment: " + env);

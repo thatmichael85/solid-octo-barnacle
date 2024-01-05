@@ -1,9 +1,6 @@
 package dist.migration.handlers;
 
-import com.amazonaws.services.lambda.runtime.ClientContext;
-import com.amazonaws.services.lambda.runtime.CognitoIdentity;
 import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -12,7 +9,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.mongodb.reactivestreams.client.MongoClient;
 import dist.migration.configs.AppConfigProperties;
 import dist.migration.configs.Configuration;
-import dist.migration.dtos.EventType;
 import dist.migration.dtos.InputDto;
 import dist.migration.dtos.ResponseDto;
 import dist.migration.factories.MongoClientFactory;
@@ -32,11 +28,20 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
   public String handleRequest(InputDto input, Context context) {
     try {
       MDC.put("AWSRequestId", context.getAwsRequestId());
-      log.info("Received {}, AWS timeLimit {} and memoryLimit {}", input, context.getRemainingTimeInMillis(), context.getMemoryLimitInMB());
+      log.info(
+          "Received {}, AWS timeLimit {} and memoryLimit {}",
+          input,
+          context.getRemainingTimeInMillis(),
+          context.getMemoryLimitInMB());
       Configuration config = loadConfig();
       InputValidator validator = new InputValidator(config);
       validator.validate(input);
-      AwsSecretsServiceImpl awsSecretsService = new AwsSecretsServiceImpl();
+      AwsSecretsService awsSecretsService;
+      if (input.getEnv().equals("local")) {
+        awsSecretsService = new AwsSecretServiceLocal();
+      } else {
+        awsSecretsService = new AwsSecretsServiceImpl();
+      }
       MongoMigrationService migrationService =
           createMongoMigrationService(config, input, awsSecretsService);
       MigrationExecutor executor = new MigrationExecutor(migrationService);
@@ -47,6 +52,7 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
         case executeMigration -> executor.run();
       }
       MDC.clear();
+      log.info("Completed migration");
       return ResponseDto.builder()
           .awsContext(context)
           .dataBaseName(input.getDataBaseName())
@@ -109,91 +115,4 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
       throw new RuntimeException("Error loading configuration", e);
     }
   }
-
-  // Just for local testing
-  public static void main(String[] args) {
-    
-    Configuration config = loadConfig();
-    InputDto testInput = new InputDto();
-    testInput.setDataBaseName("DefaultDatabase");
-    testInput.setCollectionName("yourCollectionName");
-    testInput.setEventType(EventType.executeMigration);
-    testInput.setEnv("dev");
-    InputValidator validator = new InputValidator(config);
-    validator.validate(testInput);
-    AwsSecretsService awsSecretsService = new AwsSecretServiceLocal();
-    MongoMigrationService migrationService =
-        createMongoMigrationService(config, testInput, awsSecretsService);
-    MigrationExecutor executor = new MigrationExecutor(migrationService);
-    executor.run();
-    log.info("Migration process completed in local testing");
-  }
-
-  private class LocalContext implements Context {
-
-      @Override
-      public String getAwsRequestId() {
-        return "LOCALTESTING";
-      }
-
-      @Override
-      public ClientContext getClientContext() {
-        return null;
-      }
-
-      @Override
-      public String getFunctionName() {
-        // TODO Auto-generated method stub
-        return "LOCALTESTING";
-      }
-
-      @Override
-      public String getFunctionVersion() {
-        // TODO Auto-generated method stub
-        return null;
-      }
-
-      @Override
-      public CognitoIdentity getIdentity() {
-        // TODO Auto-generated method stub
-        return null;
-      }
-
-      @Override
-      public String getInvokedFunctionArn() {
-        // TODO Auto-generated method stub
-        return null;
-      }
-
-      @Override
-      public String getLogGroupName() {
-        // TODO Auto-generated method stub
-        return null;
-      }
-
-      @Override
-      public String getLogStreamName() {
-        // TODO Auto-generated method stub
-        return null;
-      }
-
-      @Override
-      public LambdaLogger getLogger() {
-        // TODO Auto-generated method stub
-        return null;
-      }
-
-      @Override
-      public int getMemoryLimitInMB() {
-        // TODO Auto-generated method stub
-        return 10;
-      }
-
-      @Override
-      public int getRemainingTimeInMillis() {
-        // TODO Auto-generated method stub
-        return 123407734;
-      }
-      
-    }
 }

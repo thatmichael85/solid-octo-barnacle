@@ -58,7 +58,7 @@ dependencies {
 
 application {
     // Define the main class for the application.
-    mainClass = 'dist.migration.handlers.MongoMigrationHandler'
+    mainClass = 'dist.migration.App'
 }
 
 test {
