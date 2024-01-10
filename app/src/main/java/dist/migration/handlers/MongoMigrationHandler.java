@@ -9,11 +9,11 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.mongodb.reactivestreams.client.MongoClient;
 import dist.migration.configs.AppConfigProperties;
 import dist.migration.configs.Configuration;
+import dist.migration.configs.DatabaseProperties;
 import dist.migration.dtos.InputDto;
 import dist.migration.dtos.ResponseDto;
 import dist.migration.factories.MongoClientFactory;
 import dist.migration.services.*;
-import dist.migration.validators.InputValidator;
 import java.io.InputStream;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -34,8 +34,6 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
           context.getRemainingTimeInMillis(),
           context.getMemoryLimitInMB());
       Configuration config = loadConfig();
-      InputValidator validator = new InputValidator(config);
-      validator.validate(input);
       AwsSecretsService awsSecretsService;
       if (input.getEnv().equals("local")) {
         awsSecretsService = new AwsSecretServiceLocal();
@@ -77,19 +75,20 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
       Configuration config, InputDto input, AwsSecretsService awsSecretsService) {
 
     AppConfigProperties appConfigProperties = config.getConfigForEnv(input.getEnv());
-
-    String sourceHost = appConfigProperties.getSourceUrl();
+    Map<String, DatabaseProperties> databaseConfigs = appConfigProperties.getDatabases();
+    DatabaseProperties databaseProperties = databaseConfigs.get(input.getDataBaseName());
+    String sourceHost = databaseProperties.getSourceUrl();
     String sourceDatabase = input.getDataBaseName();
-    String sourceUsername = awsSecretsService.getSecret(appConfigProperties.getSourceUserNameArn());
+    String sourceUsername = awsSecretsService.getSecret(databaseProperties.getSourceUserNameArn());
     String sourcePassword =
-        awsSecretsService.getSecret(appConfigProperties.getSourceUserPasswordArn());
+        awsSecretsService.getSecret(databaseProperties.getSourceUserPasswordArn());
 
-    String destHost = appConfigProperties.getDestinationUrl();
+    String destHost = databaseProperties.getDestinationUrl();
     String destinationDatabase = input.getDataBaseName();
     String destinationUsername =
-        awsSecretsService.getSecret(appConfigProperties.getDestinationUserNameArn());
+        awsSecretsService.getSecret(databaseProperties.getDestinationUserNameArn());
     String destinationPassword =
-        awsSecretsService.getSecret(appConfigProperties.getDestinationUserPasswordArn());
+        awsSecretsService.getSecret(databaseProperties.getDestinationUserPasswordArn());
     String collectionName = input.getCollectionName();
 
     MongoClient sourceClient =

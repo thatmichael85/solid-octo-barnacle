@@ -1,52 +1,48 @@
 local:
-  sourceUrl: "localhost:27017"
-  sourceDatabase: "DefaultDatabase"
-  sourceUserNameArn: ""
-  sourceUserPasswordArn: ""
-  destinationUrl: "localhost:27018"
-  destinationDatabase: "DefaultDatabase"
-  destinationUserNameArn: ""
-  destinationUserPasswordArn: ""
-  validCollections:
-    - "yourCollectionName"
-  validDatabases:
-    - "DefaultDatabase"
+  databases:
+    db_name1:
+      sourceUrl: "localhost:27017"
+      sourceUserNameArn: ""
+      sourceUserPasswordArn: ""
+      destinationUrl: "localhost:27018"
+      destinationUserNameArn: ""
+      destinationUserPasswordArn: ""
+    db_name2:
+      sourceUrl: "localhost:27017"
+      sourceUserNameArn: ""
+      sourceUserPasswordArn: ""
+      destinationUrl: "localhost:27018"
+      destinationUserNameArn: ""
+      destinationUserPasswordArn: ""
 dev:
-  sourceUrl: "localhost:27017"
-  sourceDatabase: "DefaultDatabase"
-  sourceUserNameArn: ""
-  sourceUserPasswordArn: ""
-  destinationUrl: "localhost:27018"
-  destinationDatabase: "DefaultDatabase"
-  destinationUserNameArn: ""
-  destinationUserPasswordArn: ""
-  validCollections:
-    - "yourCollectionName"
-  validDatabases:
-    - "DefaultDatabase"
+  databases:
+    db_name1:
+      sourceUrl: "localhost:27017"
+      sourceUserNameArn: ""
+      sourceUserPasswordArn: ""
+      destinationUrl: "localhost:27018"
+      destinationUserNameArn: ""
+      destinationUserPasswordArn: ""
+    db_name2:
+      sourceUrl: "localhost:27017"
+      sourceUserNameArn: ""
+      sourceUserPasswordArn: ""
+      destinationUrl: "localhost:27018"
+      destinationUserNameArn: ""
+      destinationUserPasswordArn: ""
 qa:
-  sourceUrl: "MongoSource:27017"
-  sourceDatabase: "DefaultDatabase"
-  sourceUserNameArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:sourceUsername-BViZeQ"
-  sourceUserPasswordArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:sourcePassword-roSjDI"
-  destinationUrl: "MongoDestination:27017"
-  destinationDatabase: "DefaultDatabase"
-  destinationUserNameArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:destUsername-fwqsMU"
-  destinationUserPasswordArn: "arn:aws:secretsmanager:us-east-1:000000000000:secret:destPassword-LjzfLg"
-  validCollections:
-    - "yourCollectionName"
-  validDatabases:
-    - "DefaultDatabase"
-prod:
-  sourceUrl: "mongodb://prod-source-server"
-  sourceDatabase: "DefaultDatabase"
-  sourceUserNameArn: "arn:aws:secretsmanager:prod:source:username"
-  sourceUserPasswordArn: "arn:aws:secretsmanager:prod:source:password"
-  destinationUrl: "mongodb://prod-destination-server"
-  destinationDatabase: "prodDestinationDb"
-  destinationUserNameArn: "arn:aws:secretsmanager:prod:destination:username"
-  destinationUserPasswordArn: "arn:aws:secretsmanager:prod:destination:password"
-  validCollections:
-    - "yourCollectionName"
-  validDatabases:
-    - "DefaultDatabase"
+  databases:
+    db_name1:
+      sourceUrl: "localhost:27017"
+      sourceUserNameArn: ""
+      sourceUserPasswordArn: ""
+      destinationUrl: "localhost:27018"
+      destinationUserNameArn: ""
+      destinationUserPasswordArn: ""
+    db_name2:
+      sourceUrl: "localhost:27017"
+      sourceUserNameArn: ""
+      sourceUserPasswordArn: ""
+      destinationUrl: "localhost:27018"
+      destinationUserNameArn: ""
+      destinationUserPasswordArn: ""

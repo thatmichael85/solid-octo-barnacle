@@ -8,7 +8,6 @@ import dist.migration.configs.Configuration;
 import dist.migration.dtos.EventType;
 import dist.migration.dtos.InputDto;
 import dist.migration.services.MongoMigrationService;
-import dist.migration.validators.InputValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -19,8 +18,6 @@ class MigrationExecutorTest {
 
     @Mock
     private Configuration config;
-    @Mock
-    private InputValidator validator;
     @Mock
     private MongoMigrationService mongoMigrationService;
 

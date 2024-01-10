@@ -4,7 +4,6 @@ import com.amazonaws.services.lambda.runtime.ClientContext;
 import com.amazonaws.services.lambda.runtime.CognitoIdentity;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
-import dist.migration.configs.Configuration;
 import dist.migration.dtos.EventType;
 import dist.migration.dtos.InputDto;
 import dist.migration.handlers.MongoMigrationHandler;
@@ -16,7 +15,7 @@ public class App {
     // Just for local testing
     public static void main(String[] args) {
         InputDto testInput = new InputDto();
-        testInput.setDataBaseName("DefaultDatabase");
+        testInput.setDataBaseName("db_name1");
         testInput.setEventType(EventType.dropCollection);
         testInput.setCollectionName("yourCollectionName");
         testInput.setEnv("local");
