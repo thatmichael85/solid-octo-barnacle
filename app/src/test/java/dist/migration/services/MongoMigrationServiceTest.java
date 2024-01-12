@@ -82,14 +82,14 @@ class MongoMigrationServiceTest {
 
   @Test
   void dropDestinationCollectionSuccess() {
-    when(mockDestCollection.drop()).thenReturn(Mono.empty());
-    StepVerifier.create(service.dropDestinationCollection("testCollection")).verifyComplete();
+    when(mockDestDatabase.drop()).thenReturn(Mono.empty());
+    StepVerifier.create(service.dropDatabase()).verifyComplete();
   }
 
   @Test
   void dropDestinationCollectionError() {
-    when(mockDestCollection.drop()).thenReturn(Mono.error(new RuntimeException("Drop error")));
-    StepVerifier.create(service.dropDestinationCollection("testCollection"))
+    when(mockDestDatabase.drop()).thenReturn(Mono.error(new RuntimeException("Drop error")));
+    StepVerifier.create(service.dropDatabase())
         .verifyErrorMatches(
             e -> e instanceof RuntimeException && e.getMessage().equals("Drop error"));
   }

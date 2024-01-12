@@ -25,10 +25,8 @@ def insert_batch(mongo_client, db_name, collection_name, batch_data, names, stop
     result = collection.insert_many(batch)
     return len(result.inserted_ids) * len(BSON.encode(batch[0]))
 
-def insert_data_into_collection(collection_name, stop_event):
-    client_url = 'mongodb://localhost:27017/'
-    mongo_client = MongoClient(client_url)
-    db_name = 'DefaultDatabase'
+def insert_data_into_collection(mongo_client, collection_name, stop_event):
+    db_name = 'db_name1'
     target_size = 3 * 1024 * 1024 * 1024  # GB in bytes
     document_size = 1024 * 10  # Size of each document in bytes (approximate)
     batch_size = 500  # Number of documents to insert at once
@@ -39,24 +37,26 @@ def insert_data_into_collection(collection_name, stop_event):
 
     while total_size < target_size and not stop_event.is_set():
         batch_data = [generate_random_data(document_size) for _ in range(batch_size)]
-        names = ['Name_' + str(i) for i in range(len(batch_data))] 
+        names = ['Name_' + str(i) for i in range(len(batch_data))]
         total_inserted = insert_batch(mongo_client, db_name, collection_name, batch_data, names, stop_event)
         total_size += total_inserted
-        print(f"Inserted batch of size {total_inserted/10**6} Mbytes into {collection_name}, total size: {total_size/10**6} Mbytes")
-    
+        print(f"Inserted batch of size {total_inserted/10**6} MBytes into {collection_name}, total size: {total_size/10**6} MBytes")
+
     print(f"Insertion into {collection_name} stopped or completed.")
 
 def main():
+    client_url = 'mongodb://localhost:27017/'
+    mongo_client = MongoClient(client_url)
     collection_names = ['yourCollectionName', 'Collection2', 'Collection3', 'AnotherOne']  # Collection names
     stop_event = Event()
 
     try:
         with ThreadPoolExecutor(max_workers=5) as executor:
             for collection_name in collection_names:
-                executor.submit(insert_data_into_collection, collection_name, stop_event)
+                executor.submit(insert_data_into_collection, mongo_client, collection_name, stop_event)
     except KeyboardInterrupt:
         print("Received interrupt, stopping threads...")
-        stop_event.set() 
+        stop_event.set()
 
     print("Finished or stopped populating the MongoDB collections.")
 

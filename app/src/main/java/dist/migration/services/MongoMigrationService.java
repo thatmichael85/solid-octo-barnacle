@@ -109,19 +109,18 @@ public class MongoMigrationService {
             + " GB");
   }
 
-  public Mono<Void> dropDestinationCollection(String collectionName) {
+  public Mono<Void> dropDatabase() {
     MongoDatabase destDb = destClient.getDatabase(destDbName);
-    MongoCollection<Document> destCollection = destDb.getCollection(collectionName);
 
-    return Mono.from(destCollection.drop())
+    return Mono.from(destDb.drop())
         .doOnSuccess(
             aVoid -> logger.info(
-                "Collection '"
-                    + collectionName
-                    + "' dropped successfully in destination database"))
+                "Database '"
+                    + destDbName
+                    + "' dropped successfully in destination cluster"))
         .doOnError(
             e -> logger.error(
-                "Error dropping collection '" + collectionName + "' in destination database",
+                "Error dropping database '" + destDbName + "' in destination cluster",
                 e))
         .then()
         .doFinally(

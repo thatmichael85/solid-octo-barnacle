@@ -44,10 +44,20 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
           createMongoMigrationService(config, input, awsSecretsService);
       MigrationExecutor executor = new MigrationExecutor(migrationService);
       switch (input.getEventType()) {
-        case dropCollection -> executor.dropCollection(input.getCollectionName());
-        case checkConnectivity -> executor.checkConnectivity();
-        case getCollectionSize -> executor.getCollectionSize(input.getCollectionName());
-        case executeMigration -> executor.run();
+        case dropCollection:
+          executor.dropDatabase();
+          break;
+        case checkConnectivity:
+          executor.checkConnectivity();
+          break;
+        case getCollectionSize:
+          executor.getCollectionSize(input.getCollectionName());
+          break;
+        case executeMigration:
+          executor.run();
+          break;
+        default:
+          throw new MigrationExecutorException("Invalid event type");
       }
       MDC.clear();
       log.info("Completed migration");

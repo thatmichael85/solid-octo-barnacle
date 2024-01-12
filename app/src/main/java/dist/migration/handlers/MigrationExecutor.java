@@ -18,14 +18,14 @@ public class MigrationExecutor {
     migrationService.getCollectionSize(collectionName).block();
   }
 
-  public void dropCollection(String collectionName) {
+  public void dropDatabase() {
     try {
       migrationService
           .testDestinationConnectivity()
           .flatMap(
               result -> {
                 if (result) {
-                  return migrationService.dropDestinationCollection(collectionName);
+                  return migrationService.dropDatabase();
                 } else {
                   return Mono.error(
                       new MigrationExecutorException("Destination Connectivity Test Failed"));
@@ -33,7 +33,7 @@ public class MigrationExecutor {
               })
           .block();
     } catch (Exception e) {
-      throw new MigrationExecutorException("Drop collection:" + collectionName + " Failed");
+      throw new MigrationExecutorException("Drop database Failed");
     }
   }
 

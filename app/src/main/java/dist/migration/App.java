@@ -16,7 +16,7 @@ public class App {
     public static void main(String[] args) {
         InputDto testInput = new InputDto();
         testInput.setDataBaseName("db_name1");
-        testInput.setEventType(EventType.dropCollection);
+        testInput.setEventType(EventType.executeMigration);
         testInput.setCollectionName("yourCollectionName");
         testInput.setEnv("local");
         MongoMigrationHandler mongoMigrationHandlerLocal = new MongoMigrationHandler();
