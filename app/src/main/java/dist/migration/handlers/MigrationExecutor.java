@@ -79,6 +79,47 @@ public class MigrationExecutor {
     }
   }
 
+  public void run(String collectionName) {
+    try {
+      log.info("Migrating: {}", collectionName);
+      startMigration(collectionName).block();
+    } catch (RuntimeException e) {
+      if (e.getCause() instanceof MigrationExecutorException) {
+        throw (MigrationExecutorException) e.getCause();
+      }
+      throw e;
+    }
+  }
+
+  private Mono<Void> startMigration(String collectionName) {
+    return Mono.fromRunnable(() -> log.info("Starting migration..."))
+        .then(migrationService.testSourceConnectivity())
+        .flatMap(
+            result -> {
+              if (result) {
+                return migrationService.testDestinationConnectivity();
+              } else {
+                return Mono.error(
+                    new MigrationExecutorException("Source Connectivity Test Failed"));
+              }
+            })
+        .flatMap(
+            result -> {
+              if (result) {
+                return migrationService.migrateCollection(collectionName);
+              } else {
+                return Mono.error(
+                    new MigrationExecutorException("Destination Connectivity Test Failed"));
+              }
+            })
+        .doOnSuccess(aVoid -> log.info("Migration completed successfully"))
+        .doOnError(e -> log.error("Migration failed", e))
+        .doFinally(signalType -> log.info("Migration process ended with signal: " + signalType))
+        .then()
+        .onErrorMap(
+            e -> new MigrationExecutorException("Migration process was interrupted or failed", e));
+  }
+
   private Mono<Void> startMigration() {
     return Mono.fromRunnable(() -> log.info("Starting migration..."))
         .then(migrationService.testSourceConnectivity())

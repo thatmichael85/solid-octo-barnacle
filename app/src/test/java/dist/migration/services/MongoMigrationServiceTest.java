@@ -55,7 +55,7 @@ class MongoMigrationServiceTest {
     when(mockSourceDatabase.getCollection(anyString())).thenReturn(mockSourceCollection);
     when(mockDestDatabase.getCollection(anyString())).thenReturn(mockDestCollection);
     service = new MongoMigrationService(
-        mockSourceClient, "sourceDb", mockDestClient, "destDb", "testCollection");
+        mockSourceClient, "sourceDb", mockDestClient, "destDb");
   }
 
   @AfterEach

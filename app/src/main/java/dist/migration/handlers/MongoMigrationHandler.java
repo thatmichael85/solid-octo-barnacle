@@ -54,7 +54,7 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
           executor.getCollectionSize(input.getCollectionName());
           break;
         case executeMigration:
-          executor.run();
+          executor.run(input.getCollectionName());
           break;
         default:
           throw new MigrationExecutorException("Invalid event type");
@@ -107,7 +107,7 @@ public class MongoMigrationHandler implements RequestHandler<InputDto, String> {
         MongoClientFactory.createClient(destHost, destinationUsername, destinationPassword);
 
     return new MongoMigrationService(
-        sourceClient, sourceDatabase, destClient, destinationDatabase, collectionName);
+        sourceClient, sourceDatabase, destClient, destinationDatabase);
   }
 
   private static Configuration loadConfig() {
